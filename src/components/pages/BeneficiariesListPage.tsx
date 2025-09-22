@@ -35,7 +35,6 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     governorate: '',
     city: '',
