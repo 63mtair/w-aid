@@ -49,6 +49,12 @@ export default function MessagesSettingsPage() {
   const { logInfo, logError } = useErrorLogger();
   const [activeTab, setActiveTab] = useState('templates');
   const [searchTerm, setSearchTerm] = useState('');
+  const [messagesSearchTerm, setMessagesSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'add-template' | 'edit-template' | 'view-template' | 'test-template' | 'view-log'>('add-template');
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -700,6 +706,9 @@ export default function MessagesSettingsPage() {
                     >
                       {template.isActive ? 'إلغاء' : 'تفعيل'}
                     </Button>
+                    <Button variant="error" size="sm" onClick={() => handleDeleteTemplate(template)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </Card>
               );
@@ -882,22 +891,20 @@ export default function MessagesSettingsPage() {
                     filteredLogs.map((log) => {
                       const TypeIcon = getTypeIcon(log.type);
                       return (
-                        <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={log.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className={`p-2 rounded-lg ml-3 ${getTypeColor(log.type)}`}>
-                                <TypeIcon className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{log.templateName}</div>
-                                <div className="text-sm text-gray-500">#{log.id}</div>
-                              </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{log.templateName}</div>
+                              <div className="text-sm text-gray-500">#{log.id}</div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge variant="info" size="sm">
-                              {messageTypes.find(t => t.value === log.type)?.label || log.type}
-                            </Badge>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              <TypeIcon className="w-4 h-4" />
+                              <Badge variant="info" size="sm">
+                                {messageTypes.find(t => t.value === log.type)?.label || log.type}
+                              </Badge>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
@@ -1182,11 +1189,10 @@ export default function MessagesSettingsPage() {
                   </div>
                 </div>
 
-                {/* Variables Preview */}
-                {templateForm.content && (
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <h5 className="font-medium text-gray-900 mb-2">المتغيرات المكتشفة:</h5>
-                    <div className="flex flex-wrap gap-2">
+                {extractVariables(templateForm.content).length > 0 && (
+                  <div>
+                    <span className="font-medium text-gray-700">المتغيرات المكتشفة:</span>
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {extractVariables(templateForm.content).map(variable => (
                         <Badge key={variable} variant="info" size="sm">
                           {variable}
@@ -1371,52 +1377,6 @@ export default function MessagesSettingsPage() {
                 <div className="flex justify-end pt-4">
                   <Button variant="primary" onClick={() => setShowModal(false)}>
                     إغلاق
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Test Template */}
-            {modalType === 'test-template' && selectedItem && (
-              <div className="space-y-4">
-                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                  <h4 className="font-medium text-yellow-800 mb-2">اختبار القالب: {selectedItem.name}</h4>
-                  <p className="text-yellow-700 text-sm">سيتم إرسال رسالة تجريبية باستخدام هذا القالب</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف التجريبي</label>
-                  <input
-                    type="tel"
-                    defaultValue="0591234567"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="أدخل رقم الهاتف..."
-                  />
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h5 className="font-medium text-gray-900 mb-2">معاينة الرسالة:</h5>
-                  <p className="text-gray-700 bg-white p-3 rounded border text-sm whitespace-pre-wrap">
-                    {selectedItem.content
-                      .replace('{name}', 'محمد التجريبي')
-                      .replace('{national_id}', '900123456')
-                      .replace('{phone}', '0591234567')
-                      .replace('{package_name}', 'طرد مواد غذائية')
-                      .replace('{tracking_number}', 'TRK-2024-001')
-                      .replace('{delivery_time}', '10:00 صباحاً')
-                      .replace('{failure_reason}', 'عدم توفر المستفيد')
-                      .replace('{days_delayed}', '3')
-                      .replace('{beneficiary_name}', 'محمد التجريبي')
-                    }
-                  </p>
-                </div>
-
-                <div className="flex space-x-3 space-x-reverse justify-end pt-4">
-                  <Button variant="secondary" onClick={() => setShowModal(false)}>
-                    إلغاء
-                  </Button>
-                  <Button variant="warning" onClick={handleTestSend}>
-                    إرسال تجريبي
                   </Button>
                 </div>
               </div>
