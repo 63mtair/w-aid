@@ -75,6 +75,41 @@ export default function SystemSettingsPage() {
       lastModified: '2024-12-21',
       modifiedBy: 'أحمد الإدمن'
     },
+    {
+      id: '18',
+      category: 'general',
+      key: 'sms_provider',
+      name: 'مزود خدمة الرسائل النصية',
+      description: 'مزود الخدمة المستخدم لإرسال الرسائل النصية',
+      value: 'twilio',
+      type: 'select',
+      options: ['twilio', 'nexmo', 'local'],
+      lastModified: '2024-12-20',
+      modifiedBy: 'أحمد الإدمن'
+    },
+    {
+      id: '19',
+      category: 'general',
+      key: 'email_notifications',
+      name: 'تفعيل الإشعارات بالبريد الإلكتروني',
+      description: 'إرسال إشعارات للمستخدمين عبر البريد الإلكتروني',
+      value: 'true',
+      type: 'boolean',
+      lastModified: '2024-12-21',
+      modifiedBy: 'أحمد الإدمن'
+    },
+    {
+      id: '20',
+      category: 'general',
+      key: 'sms_api_key',
+      name: 'مفتاح API للرسائل النصية',
+      description: 'مفتاح API الخاص بمزود خدمة الرسائل النصية',
+      value: 'sk_sms_1234567890',
+      type: 'password',
+      isSecret: true,
+      lastModified: '2024-12-20',
+      modifiedBy: 'أحمد الإدمن'
+    },
 
     // Security Settings
     {
