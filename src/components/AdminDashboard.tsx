@@ -521,7 +521,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-gray-900">{pageInfo.name}</h2>
-              <p className="text-gray-600 mt-1">اختبار الاتصال وجلب البيانات من Supabase</p>
+              <p className="text-gray-600 mt-1">{pageInfo.description}</p>
             </div>
           </div>
           <TestSupabasePage />
