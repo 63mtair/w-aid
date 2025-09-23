@@ -28,6 +28,7 @@ import SystemSettingsPage from './pages/SystemSettingsPage';
 import AuditLogPage from './pages/AuditLogPage';
 import AlertsManagementPage from './pages/AlertsManagementPage';
 import MessagesSettingsPage from './pages/MessagesSettingsPage';
+import CouriersManagementPage from './pages/CouriersManagementPage';
 
 interface NavItem {
   id: string;

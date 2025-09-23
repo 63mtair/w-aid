@@ -1,478 +1,254 @@
 import React, { useState } from 'react';
-import { MessageSquare, Mail, Phone, Bell, Settings, Save, Plus, Edit, Trash2, Eye, Copy, Download, Upload, RefreshCw, CheckCircle, AlertTriangle, Clock, Users, Send, FileText, Star, Activity, X, Search, Filter } from 'lucide-react';
+import { MessageSquare, Search, Filter, Plus, Eye, Edit, Trash2, CheckCircle, Clock, AlertTriangle, Send, Download, RefreshCw, X, Bell, Mail, Phone, Settings, Users, Package, Activity, Star, Copy, Save } from 'lucide-react';
 import { useErrorLogger } from '../../utils/errorLogger';
 import { Button, Card, Input, Badge, Modal } from '../ui';
 
 interface MessageTemplate {
   id: string;
   name: string;
-  type: 'sms' | 'email' | 'push' | 'whatsapp';
-  category: 'delivery' | 'reminder' | 'confirmation' | 'alert' | 'welcome' | 'custom';
+  type: 'sms' | 'email' | 'notification';
   subject?: string;
   content: string;
   variables: string[];
   isActive: boolean;
   usageCount: number;
-  lastUsed?: string;
+  lastUsed: string;
   createdAt: string;
   createdBy: string;
 }
 
-interface NotificationSettings {
+interface NotificationSetting {
   id: string;
-  category: string;
   name: string;
   description: string;
-  smsEnabled: boolean;
-  emailEnabled: boolean;
-  pushEnabled: boolean;
-  whatsappEnabled: boolean;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  type: 'sms' | 'email' | 'push';
+  isEnabled: boolean;
+  triggers: string[];
   recipients: string[];
-}
-
-interface MessageLog {
-  id: string;
-  templateId: string;
-  templateName: string;
-  type: 'sms' | 'email' | 'push' | 'whatsapp';
-  recipient: string;
-  recipientName: string;
-  status: 'sent' | 'delivered' | 'failed' | 'pending';
-  sentAt: string;
-  deliveredAt?: string;
-  failureReason?: string;
-  cost?: number;
 }
 
 export default function MessagesSettingsPage() {
   const { logInfo, logError } = useErrorLogger();
   const [activeTab, setActiveTab] = useState('templates');
   const [searchTerm, setSearchTerm] = useState('');
-  const [messagesSearchTerm, setMessagesSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'add-template' | 'edit-template' | 'view-template' | 'test-template' | 'view-log'>('add-template');
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [modalType, setModalType] = useState<'add' | 'edit' | 'view' | 'test'>('add');
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
-  // Mock data for message templates
+  // البيانات الوهمية لقوالب الرسائل
   const [messageTemplates, setMessageTemplates] = useState<MessageTemplate[]>([
     {
-      id: '1',
-      name: 'تأكيد استلام الطرد',
+      id: 'template-1',
+      name: 'رسالة ترحيب للمستفيد الجديد',
       type: 'sms',
-      category: 'confirmation',
-      content: 'مرحباً {name}، تم تسليم طردك بنجاح. رقم الإرسالية: {tracking_number}. شكراً لك.',
-      variables: ['name', 'tracking_number'],
+      content: 'مرحباً {name}، تم تسجيلك بنجاح في منصة المساعدات الإنسانية. رقم هويتك: {nationalId}',
+      variables: ['name', 'nationalId'],
       isActive: true,
-      usageCount: 247,
+      usageCount: 156,
       lastUsed: '2024-12-21',
-      createdAt: '2024-01-15',
+      createdAt: '2024-12-01',
       createdBy: 'أحمد الإدمن'
     },
     {
-      id: '2',
-      name: 'تذكير بموعد التسليم',
+      id: 'template-2',
+      name: 'إشعار توفر طرد جديد',
       type: 'sms',
-      category: 'reminder',
-      content: 'عزيزي {name}، سيتم تسليم طردك غداً في تمام الساعة {delivery_time}. يرجى التواجد في المنزل.',
-      variables: ['name', 'delivery_time'],
+      content: 'عزيزي {name}، يتوفر لديك طرد جديد ({packageName}). يرجى التواصل معنا لتحديد موعد الاستلام.',
+      variables: ['name', 'packageName'],
       isActive: true,
-      usageCount: 156,
+      usageCount: 89,
       lastUsed: '2024-12-20',
-      createdAt: '2024-01-20',
+      createdAt: '2024-12-05',
       createdBy: 'فاطمة المشرفة'
     },
     {
-      id: '3',
-      name: 'إشعار فشل التسليم',
+      id: 'template-3',
+      name: 'تأكيد تسليم الطرد',
       type: 'sms',
-      category: 'alert',
-      content: 'عذراً {name}، لم نتمكن من تسليم طردك بسبب {failure_reason}. سيتم إعادة المحاولة قريباً.',
-      variables: ['name', 'failure_reason'],
+      content: 'تم تسليم طردك ({packageName}) بنجاح في {deliveryTime}. شكراً لك.',
+      variables: ['packageName', 'deliveryTime'],
       isActive: true,
-      usageCount: 23,
-      lastUsed: '2024-12-19',
-      createdAt: '2024-02-01',
-      createdBy: 'أحمد الإدمن'
-    },
-    {
-      id: '4',
-      name: 'ترحيب بمستفيد جديد',
-      type: 'email',
-      category: 'welcome',
-      subject: 'مرحباً بك في منصة المساعدات الإنسانية',
-      content: 'مرحباً {name}،\n\nنرحب بك في منصة المساعدات الإنسانية. تم تسجيلك بنجاح برقم الهوية {national_id}.\n\nسيتم التواصل معك قريباً لتحديد احتياجاتك.\n\nشكراً لك.',
-      variables: ['name', 'national_id'],
-      isActive: true,
-      usageCount: 89,
-      lastUsed: '2024-12-18',
-      createdAt: '2024-01-10',
-      createdBy: 'سارة المنسقة'
-    },
-    {
-      id: '5',
-      name: 'تنبيه طرد متأخر',
-      type: 'whatsapp',
-      category: 'alert',
-      content: '⚠️ تنبيه: طرد {package_name} متأخر منذ {days_delayed} أيام. المستفيد: {beneficiary_name}. يرجى المتابعة فوراً.',
-      variables: ['package_name', 'days_delayed', 'beneficiary_name'],
-      isActive: true,
-      usageCount: 45,
+      usageCount: 234,
       lastUsed: '2024-12-21',
-      createdAt: '2024-02-15',
+      createdAt: '2024-11-15',
       createdBy: 'أحمد الإدمن'
+    },
+    {
+      id: 'template-4',
+      name: 'تذكير بموعد الاستلام',
+      type: 'sms',
+      content: 'تذكير: لديك موعد لاستلام طرد غداً في {appointmentTime}. الموقع: {location}',
+      variables: ['appointmentTime', 'location'],
+      isActive: true,
+      usageCount: 67,
+      lastUsed: '2024-12-19',
+      createdAt: '2024-12-10',
+      createdBy: 'سارة الموظفة'
+    },
+    {
+      id: 'template-5',
+      name: 'إشعار تأخير في التسليم',
+      type: 'sms',
+      content: 'نعتذر عن التأخير في تسليم طردك. سيتم التواصل معك قريباً لتحديد موعد جديد.',
+      variables: [],
+      isActive: false,
+      usageCount: 23,
+      lastUsed: '2024-12-15',
+      createdAt: '2024-11-20',
+      createdBy: 'محمد المشرف'
     }
   ]);
 
-  // Mock data for notification settings
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings[]>([
+  // البيانات الوهمية لإعدادات الإشعارات
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSetting[]>([
     {
-      id: '1',
-      category: 'delivery',
-      name: 'إشعارات التسليم',
-      description: 'إشعارات عند تسليم الطرود بنجاح',
-      smsEnabled: true,
-      emailEnabled: false,
-      pushEnabled: true,
-      whatsappEnabled: true,
-      priority: 'high',
-      recipients: ['beneficiary', 'admin']
-    },
-    {
-      id: '2',
-      category: 'alerts',
-      name: 'تنبيهات الطوارئ',
-      description: 'تنبيهات للحالات الطارئة والمشاكل الحرجة',
-      smsEnabled: true,
-      emailEnabled: true,
-      pushEnabled: true,
-      whatsappEnabled: true,
-      priority: 'critical',
-      recipients: ['admin', 'supervisor']
-    },
-    {
-      id: '3',
-      category: 'reminders',
-      name: 'تذكيرات المواعيد',
-      description: 'تذكيرات بمواعيد التسليم والمتابعة',
-      smsEnabled: true,
-      emailEnabled: false,
-      pushEnabled: true,
-      whatsappEnabled: false,
-      priority: 'medium',
+      id: 'notif-1',
+      name: 'إشعار المستفيد الجديد',
+      description: 'إرسال رسالة ترحيب عند تسجيل مستفيد جديد',
+      type: 'sms',
+      isEnabled: true,
+      triggers: ['beneficiary_created'],
       recipients: ['beneficiary']
-    }
-  ]);
-
-  // Mock data for message logs
-  const [messageLogs, setMessageLogs] = useState<MessageLog[]>([
-    {
-      id: '1',
-      templateId: '1',
-      templateName: 'تأكيد استلام الطرد',
-      type: 'sms',
-      recipient: '0591234567',
-      recipientName: 'محمد أبو عامر',
-      status: 'delivered',
-      sentAt: '2024-12-21T10:30:00',
-      deliveredAt: '2024-12-21T10:31:00',
-      cost: 0.05
     },
     {
-      id: '2',
-      templateId: '2',
-      templateName: 'تذكير بموعد التسليم',
+      id: 'notif-2',
+      name: 'إشعار توفر طرد',
+      description: 'إشعار المستفيد عند توفر طرد جديد له',
       type: 'sms',
-      recipient: '0592345678',
-      recipientName: 'فاطمة الفرا',
-      status: 'sent',
-      sentAt: '2024-12-21T09:15:00',
-      cost: 0.05
+      isEnabled: true,
+      triggers: ['package_assigned'],
+      recipients: ['beneficiary']
     },
     {
-      id: '3',
-      templateId: '3',
-      templateName: 'إشعار فشل التسليم',
+      id: 'notif-3',
+      name: 'تأكيد التسليم',
+      description: 'إرسال تأكيد للمستفيد عند تسليم الطرد',
       type: 'sms',
-      recipient: '0593456789',
-      recipientName: 'خالد النجار',
-      status: 'failed',
-      sentAt: '2024-12-20T16:45:00',
-      failureReason: 'رقم غير صحيح'
+      isEnabled: true,
+      triggers: ['package_delivered'],
+      recipients: ['beneficiary']
+    },
+    {
+      id: 'notif-4',
+      name: 'تنبيه الإدارة للطرود المتأخرة',
+      description: 'تنبيه الإدارة عند تأخر طرد أكثر من 24 ساعة',
+      type: 'email',
+      isEnabled: true,
+      triggers: ['package_delayed'],
+      recipients: ['admin', 'supervisor']
     }
   ]);
-
-  // Form states
-  const [templateForm, setTemplateForm] = useState({
-    name: '',
-    type: 'sms' as MessageTemplate['type'],
-    category: 'custom' as MessageTemplate['category'],
-    subject: '',
-    content: '',
-    variables: [] as string[]
-  });
 
   const tabs = [
     { id: 'templates', name: 'قوالب الرسائل', icon: MessageSquare },
-    { id: 'settings', name: 'إعدادات الإشعارات', icon: Settings },
-    { id: 'logs', name: 'سجل الرسائل', icon: Activity },
-    { id: 'statistics', name: 'الإحصائيات', icon: Star }
-  ];
-
-  const templateCategories = [
-    { value: 'delivery', label: 'التسليم' },
-    { value: 'reminder', label: 'التذكيرات' },
-    { value: 'confirmation', label: 'التأكيد' },
-    { value: 'alert', label: 'التنبيهات' },
-    { value: 'welcome', label: 'الترحيب' },
-    { value: 'custom', label: 'مخصص' }
-  ];
-
-  const messageTypes = [
-    { value: 'sms', label: 'رسالة نصية', icon: Phone },
-    { value: 'email', label: 'بريد إلكتروني', icon: Mail },
-    { value: 'push', label: 'إشعار فوري', icon: Bell },
-    { value: 'whatsapp', label: 'واتساب', icon: MessageSquare }
+    { id: 'notifications', name: 'إعدادات الإشعارات', icon: Bell },
+    { id: 'history', name: 'سجل الرسائل', icon: Activity },
+    { id: 'settings', name: 'إعدادات عامة', icon: Settings }
   ];
 
   // فلترة القوالب
   const filteredTemplates = messageTemplates.filter(template => {
     const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          template.content.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    const matchesType = typeFilter === 'all' || template.type === typeFilter;
+    
+    return matchesSearch && matchesType;
   });
-
-  // فلترة سجل الرسائل
-  const filteredLogs = messageLogs.filter(log => {
-    const matchesSearch = log.templateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.recipient.includes(searchTerm);
-    return matchesSearch;
-  });
-
-  // Mock data for filtered messages
-  const filteredMessages = messageLogs.filter(log => {
-    const matchesSearch = log.templateName.toLowerCase().includes(messagesSearchTerm.toLowerCase()) ||
-                         log.recipientName.toLowerCase().includes(messagesSearchTerm.toLowerCase()) ||
-                         log.recipient.includes(messagesSearchTerm);
-    const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
-    const matchesType = typeFilter === 'all' || log.type === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  // Pagination calculations
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedMessages = filteredMessages.slice(startIndex, endIndex);
 
   // إحصائيات
-  const statistics = {
-    totalTemplates: messageTemplates.length,
-    activeTemplates: messageTemplates.filter(t => t.isActive).length,
-    totalSent: messageLogs.length,
-    delivered: messageLogs.filter(l => l.status === 'delivered').length,
-    failed: messageLogs.filter(l => l.status === 'failed').length,
-    pending: messageLogs.filter(l => l.status === 'pending').length,
-    totalCost: messageLogs.reduce((sum, log) => sum + (log.cost || 0), 0)
+  const templateStats = {
+    total: messageTemplates.length,
+    active: messageTemplates.filter(t => t.isActive).length,
+    sms: messageTemplates.filter(t => t.type === 'sms').length,
+    email: messageTemplates.filter(t => t.type === 'email').length,
+    totalUsage: messageTemplates.reduce((sum, t) => sum + t.usageCount, 0)
   };
 
   const handleAddTemplate = () => {
-    setModalType('add-template');
-    setSelectedItem(null);
-    setTemplateForm({
-      name: '',
-      type: 'sms',
-      category: 'custom',
-      subject: '',
-      content: '',
-      variables: []
-    });
+    setModalType('add');
+    setSelectedTemplate(null);
     setShowModal(true);
   };
 
   const handleEditTemplate = (template: MessageTemplate) => {
-    setModalType('edit-template');
-    setSelectedItem(template);
-    setTemplateForm({
-      name: template.name,
-      type: template.type,
-      category: template.category,
-      subject: template.subject || '',
-      content: template.content,
-      variables: template.variables
-    });
+    setModalType('edit');
+    setSelectedTemplate(template);
     setShowModal(true);
   };
 
   const handleViewTemplate = (template: MessageTemplate) => {
-    setModalType('view-template');
-    setSelectedItem(template);
+    setModalType('view');
+    setSelectedTemplate(template);
     setShowModal(true);
   };
 
   const handleTestTemplate = (template: MessageTemplate) => {
-    setModalType('test-template');
-    setSelectedItem(template);
+    setModalType('test');
+    setSelectedTemplate(template);
     setShowModal(true);
   };
 
-  const handleSaveTemplate = () => {
-    if (!templateForm.name.trim() || !templateForm.content.trim()) {
-      setNotification({ message: 'يرجى إدخال اسم القالب والمحتوى', type: 'error' });
-      setTimeout(() => setNotification(null), 3000);
-      return;
-    }
-
-    if (selectedItem) {
-      // تحديث قالب موجود
-      setMessageTemplates(prev => 
-        prev.map(template => 
-          template.id === selectedItem.id 
-            ? {
-                ...template,
-                name: templateForm.name,
-                type: templateForm.type,
-                category: templateForm.category,
-                subject: templateForm.subject,
-                content: templateForm.content,
-                variables: extractVariables(templateForm.content)
-              }
-            : template
-        )
-      );
-      setNotification({ message: 'تم تحديث القالب بنجاح', type: 'success' });
-    } else {
-      // إضافة قالب جديد
-      const newTemplate: MessageTemplate = {
-        id: `template-${Date.now()}`,
-        name: templateForm.name,
-        type: templateForm.type,
-        category: templateForm.category,
-        subject: templateForm.subject,
-        content: templateForm.content,
-        variables: extractVariables(templateForm.content),
-        isActive: true,
-        usageCount: 0,
-        createdAt: new Date().toISOString(),
-        createdBy: 'أحمد الإدمن'
-      };
-      setMessageTemplates(prev => [newTemplate, ...prev]);
-      setNotification({ message: 'تم إضافة القالب بنجاح', type: 'success' });
-    }
-
-    setTimeout(() => setNotification(null), 3000);
-    setShowModal(false);
-    setSelectedItem(null);
-    logInfo(`تم ${selectedItem ? 'تحديث' : 'إضافة'} قالب الرسالة: ${templateForm.name}`, 'MessagesSettingsPage');
-  };
-
-  const handleDeleteTemplate = (template: MessageTemplate) => {
-    if (confirm(`هل أنت متأكد من حذف القالب "${template.name}"؟`)) {
-      setMessageTemplates(prev => prev.filter(t => t.id !== template.id));
-      setNotification({ message: 'تم حذف القالب بنجاح', type: 'success' });
-      setTimeout(() => setNotification(null), 3000);
-      logInfo(`تم حذف قالب الرسالة: ${template.name}`, 'MessagesSettingsPage');
-    }
-  };
-
-  const handleToggleTemplate = (template: MessageTemplate) => {
+  const handleToggleTemplate = (templateId: string) => {
     setMessageTemplates(prev => 
-      prev.map(t => 
-        t.id === template.id 
-          ? { ...t, isActive: !t.isActive }
-          : t
+      prev.map(template => 
+        template.id === templateId 
+          ? { ...template, isActive: !template.isActive }
+          : template
       )
     );
+    
+    const template = messageTemplates.find(t => t.id === templateId);
     setNotification({ 
-      message: `تم ${template.isActive ? 'إلغاء تفعيل' : 'تفعيل'} القالب`, 
+      message: `تم ${template?.isActive ? 'إلغاء تفعيل' : 'تفعيل'} القالب بنجاح`, 
       type: 'success' 
     });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleTestSend = () => {
-    if (!selectedItem) return;
+  const handleDeleteTemplate = (templateId: string) => {
+    if (confirm('هل أنت متأكد من حذف هذا القالب؟')) {
+      setMessageTemplates(prev => prev.filter(t => t.id !== templateId));
+      setNotification({ message: 'تم حذف القالب بنجاح', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
+    }
+  };
+
+  const handleToggleNotification = (notificationId: string) => {
+    setNotificationSettings(prev => 
+      prev.map(setting => 
+        setting.id === notificationId 
+          ? { ...setting, isEnabled: !setting.isEnabled }
+          : setting
+      )
+    );
     
-    // محاكاة إرسال رسالة تجريبية
-    const testLog: MessageLog = {
-      id: `test-${Date.now()}`,
-      templateId: selectedItem.id,
-      templateName: selectedItem.name,
-      type: selectedItem.type,
-      recipient: '0591234567',
-      recipientName: 'مستخدم تجريبي',
-      status: 'sent',
-      sentAt: new Date().toISOString(),
-      cost: 0.05
-    };
-    
-    setMessageLogs(prev => [testLog, ...prev]);
-    setNotification({ message: 'تم إرسال الرسالة التجريبية بنجاح', type: 'success' });
+    const setting = notificationSettings.find(s => s.id === notificationId);
+    setNotification({ 
+      message: `تم ${setting?.isEnabled ? 'إلغاء تفعيل' : 'تفعيل'} الإشعار بنجاح`, 
+      type: 'success' 
+    });
     setTimeout(() => setNotification(null), 3000);
-    setShowModal(false);
-  };
-
-  const extractVariables = (content: string): string[] => {
-    const matches = content.match(/\{([^}]+)\}/g);
-    return matches ? matches.map(match => match.slice(1, -1)) : [];
-  };
-
-  const getTypeIcon = (type: string) => {
-    const typeInfo = messageTypes.find(t => t.value === type);
-    return typeInfo ? typeInfo.icon : MessageSquare;
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'sms': return 'bg-blue-100 text-blue-800';
       case 'email': return 'bg-green-100 text-green-800';
-      case 'push': return 'bg-purple-100 text-purple-800';
-      case 'whatsapp': return 'bg-green-100 text-green-800';
+      case 'notification': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'delivery': return 'bg-green-100 text-green-800';
-      case 'reminder': return 'bg-blue-100 text-blue-800';
-      case 'confirmation': return 'bg-purple-100 text-purple-800';
-      case 'alert': return 'bg-red-100 text-red-800';
-      case 'welcome': return 'bg-yellow-100 text-yellow-800';
-      case 'custom': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'sent': return 'bg-blue-100 text-blue-800';
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'sent': return 'تم الإرسال';
-      case 'delivered': return 'تم التسليم';
-      case 'failed': return 'فشل';
-      case 'pending': return 'في الانتظار';
+  const getTypeText = (type: string) => {
+    switch (type) {
+      case 'sms': return 'رسالة نصية';
+      case 'email': return 'بريد إلكتروني';
+      case 'notification': return 'إشعار';
       default: return 'غير محدد';
     }
-  };
-
-  const getCategoryText = (category: string) => {
-    const categoryInfo = templateCategories.find(c => c.value === category);
-    return categoryInfo ? categoryInfo.label : 'غير محدد';
   };
 
   const getNotificationClasses = (type: 'success' | 'error' | 'warning') => {
@@ -495,15 +271,14 @@ export default function MessagesSettingsPage() {
     const exportData = {
       date: new Date().toISOString(),
       totalTemplates: messageTemplates.length,
-      activeTemplates: messageTemplates.filter(t => t.isActive).length,
-      templates: messageTemplates.map(t => ({
+      activeTemplates: templateStats.active,
+      templates: filteredTemplates.map(t => ({
         name: t.name,
-        type: t.type,
-        category: getCategoryText(t.category),
+        type: getTypeText(t.type),
         content: t.content,
         variables: t.variables,
-        usageCount: t.usageCount,
-        isActive: t.isActive
+        isActive: t.isActive ? 'مفعل' : 'معطل',
+        usageCount: t.usageCount
       }))
     };
     
@@ -517,35 +292,6 @@ export default function MessagesSettingsPage() {
     URL.revokeObjectURL(url);
     
     setNotification({ message: 'تم تصدير قوالب الرسائل بنجاح', type: 'success' });
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  const handleExportLogs = () => {
-    const exportData = {
-      date: new Date().toISOString(),
-      totalMessages: messageLogs.length,
-      statistics,
-      logs: messageLogs.map(log => ({
-        templateName: log.templateName,
-        type: log.type,
-        recipient: log.recipientName,
-        status: getStatusText(log.status),
-        sentAt: log.sentAt,
-        deliveredAt: log.deliveredAt,
-        cost: log.cost
-      }))
-    };
-    
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `سجل_الرسائل_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    setNotification({ message: 'تم تصدير سجل الرسائل بنجاح', type: 'success' });
     setTimeout(() => setNotification(null), 3000);
   };
 
@@ -567,32 +313,34 @@ export default function MessagesSettingsPage() {
         <div className="flex items-center space-x-2 space-x-reverse text-blue-600">
           <CheckCircle className="w-4 h-4" />
           <span className="text-sm font-medium">
-            البيانات الوهمية محملة - {messageTemplates.length} قالب، {messageLogs.length} رسالة مرسلة
+            البيانات الوهمية محملة - {messageTemplates.length} قالب رسالة
           </span>
         </div>
       </Card>
 
       {/* Tabs */}
-      <Card>
-        <div className="flex space-x-1 space-x-reverse">
-          {tabs.map((tab) => {
-            const IconComponent = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 space-x-reverse px-4 py-3 rounded-lg font-medium text-sm transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <IconComponent className="w-4 h-4" />
-                <span>{tab.name}</span>
-              </button>
-            );
-          })}
+      <Card padding="none">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 space-x-reverse px-6">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 space-x-reverse py-4 border-b-2 font-medium text-sm transition-colors ${
+                    isActive
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <IconComponent className="w-4 h-4 ml-2" />
+                  <span>{tab.name}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </Card>
 
@@ -602,36 +350,62 @@ export default function MessagesSettingsPage() {
           {/* Actions Bar */}
           <div className="flex items-center justify-between">
             <div className="flex space-x-3 space-x-reverse">
-              <Button variant="success" icon={Download} iconPosition="right" onClick={handleExportTemplates}>
+              <Button 
+                variant="success" 
+                icon={Download} 
+                iconPosition="right"
+                onClick={handleExportTemplates}
+              >
                 تصدير القوالب
               </Button>
-              <Button variant="primary" icon={Plus} iconPosition="right" onClick={handleAddTemplate}>
+              <Button 
+                variant="primary" 
+                icon={Plus} 
+                iconPosition="right"
+                onClick={handleAddTemplate}
+              >
                 إضافة قالب جديد
               </Button>
             </div>
           </div>
 
-          {/* Search */}
+          {/* Search and Filters */}
           <Card>
-            <Input
-              type="text"
-              icon={Search}
-              iconPosition="right"
-              placeholder="البحث في قوالب الرسائل..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <Input
+                  type="text"
+                  icon={Search}
+                  iconPosition="right"
+                  placeholder="البحث في قوالب الرسائل..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">جميع الأنواع</option>
+                  <option value="sms">رسائل نصية</option>
+                  <option value="email">بريد إلكتروني</option>
+                  <option value="notification">إشعارات</option>
+                </select>
+              </div>
+            </div>
           </Card>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="bg-blue-50">
               <div className="text-center">
                 <div className="bg-blue-100 p-3 rounded-xl mb-2">
                   <MessageSquare className="w-6 h-6 text-blue-600 mx-auto" />
                 </div>
                 <p className="text-sm text-blue-600">إجمالي القوالب</p>
-                <p className="text-2xl font-bold text-blue-900">{statistics.totalTemplates}</p>
+                <p className="text-2xl font-bold text-blue-900">{templateStats.total}</p>
               </div>
             </Card>
 
@@ -641,201 +415,200 @@ export default function MessagesSettingsPage() {
                   <CheckCircle className="w-6 h-6 text-green-600 mx-auto" />
                 </div>
                 <p className="text-sm text-green-600">قوالب نشطة</p>
-                <p className="text-2xl font-bold text-green-900">{statistics.activeTemplates}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-purple-50">
-              <div className="text-center">
-                <div className="bg-purple-100 p-3 rounded-xl mb-2">
-                  <Send className="w-6 h-6 text-purple-600 mx-auto" />
-                </div>
-                <p className="text-sm text-purple-600">رسائل مرسلة</p>
-                <p className="text-2xl font-bold text-purple-900">{statistics.totalSent}</p>
+                <p className="text-2xl font-bold text-green-900">{templateStats.active}</p>
               </div>
             </Card>
 
             <Card className="bg-orange-50">
               <div className="text-center">
                 <div className="bg-orange-100 p-3 rounded-xl mb-2">
-                  <Star className="w-6 h-6 text-orange-600 mx-auto" />
+                  <Phone className="w-6 h-6 text-orange-600 mx-auto" />
                 </div>
-                <p className="text-sm text-orange-600">معدل التسليم</p>
-                <p className="text-2xl font-bold text-orange-900">
-                  {statistics.totalSent > 0 ? ((statistics.delivered / statistics.totalSent) * 100).toFixed(1) : 0}%
-                </p>
+                <p className="text-sm text-orange-600">رسائل نصية</p>
+                <p className="text-2xl font-bold text-orange-900">{templateStats.sms}</p>
+              </div>
+            </Card>
+
+            <Card className="bg-purple-50">
+              <div className="text-center">
+                <div className="bg-purple-100 p-3 rounded-xl mb-2">
+                  <Activity className="w-6 h-6 text-purple-600 mx-auto" />
+                </div>
+                <p className="text-sm text-purple-600">إجمالي الاستخدام</p>
+                <p className="text-2xl font-bold text-purple-900">{templateStats.totalUsage}</p>
               </div>
             </Card>
           </div>
 
           {/* Templates Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => {
-              const TypeIcon = getTypeIcon(template.type);
-              return (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTemplates.length > 0 ? (
+              filteredTemplates.map((template) => (
                 <Card key={template.id} className="hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3 space-x-reverse">
                       <div className={`p-2 rounded-lg ${getTypeColor(template.type)}`}>
-                        <TypeIcon className="w-5 h-5" />
+                        {template.type === 'sms' ? <Phone className="w-4 h-4" /> :
+                         template.type === 'email' ? <Mail className="w-4 h-4" /> :
+                         <Bell className="w-4 h-4" />}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                        <Badge variant={
-                          template.category === 'alert' ? 'error' :
-                          template.category === 'delivery' ? 'success' :
-                          template.category === 'reminder' ? 'warning' : 'info'
-                        } size="sm">
-                          {getCategoryText(template.category)}
+                        <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                        <Badge variant={template.isActive ? 'success' : 'neutral'} size="sm">
+                          {template.isActive ? 'مفعل' : 'معطل'}
                         </Badge>
                       </div>
                     </div>
-                    <Badge variant={template.isActive ? 'success' : 'neutral'} size="sm">
-                      {template.isActive ? 'نشط' : 'معطل'}
-                    </Badge>
                   </div>
 
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
+                  <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                    <p className="text-sm text-gray-700 line-clamp-3">{template.content}</p>
                   </div>
 
-                  <div className="flex items-center justify-between mb-4 text-sm text-gray-500">
+                  {template.variables.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-gray-700 mb-2">المتغيرات:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {template.variables.map(variable => (
+                          <Badge key={variable} variant="info" size="sm">
+                            {`{${variable}}`}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
                     <span>استُخدم {template.usageCount} مرة</span>
-                    <span>{template.variables.length} متغير</span>
+                    <span>آخر استخدام: {new Date(template.lastUsed).toLocaleDateString('ar-SA')}</span>
                   </div>
 
                   <div className="flex space-x-2 space-x-reverse">
-                    <Button variant="primary" size="sm" onClick={() => handleViewTemplate(template)}>
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleEditTemplate(template)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="warning" size="sm" onClick={() => handleTestTemplate(template)}>
-                      <Send className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant={template.isActive ? 'neutral' : 'success'} 
-                      size="sm" 
-                      onClick={() => handleToggleTemplate(template)}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={Eye}
+                      onClick={() => handleViewTemplate(template)}
+                      className="flex-1"
                     >
-                      {template.isActive ? 'إلغاء' : 'تفعيل'}
+                      عرض
                     </Button>
-                    <Button variant="error" size="sm" onClick={() => handleDeleteTemplate(template)}>
-                      <Trash2 className="w-4 h-4" />
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon={Edit}
+                      onClick={() => handleEditTemplate(template)}
+                      className="flex-1"
+                    >
+                      تعديل
+                    </Button>
+                    <Button
+                      variant="warning"
+                      size="sm"
+                      icon={Send}
+                      onClick={() => handleTestTemplate(template)}
+                    >
+                      اختبار
+                    </Button>
+                  </div>
+
+                  <div className="flex space-x-2 space-x-reverse mt-2">
+                    <Button
+                      variant={template.isActive ? "warning" : "success"}
+                      size="sm"
+                      onClick={() => handleToggleTemplate(template.id)}
+                      className="flex-1"
+                    >
+                      {template.isActive ? 'إلغاء التفعيل' : 'تفعيل'}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      icon={Trash2}
+                      onClick={() => handleDeleteTemplate(template.id)}
+                    >
+                      حذف
                     </Button>
                   </div>
                 </Card>
-              );
-            })}
+              ))
+            ) : (
+              <div className="col-span-full bg-gray-50 border border-gray-200 rounded-2xl p-12">
+                <div className="text-center text-gray-500">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">
+                    {searchTerm || typeFilter !== 'all' 
+                      ? 'لا توجد قوالب مطابقة للفلاتر' 
+                      : 'لا توجد قوالب رسائل'}
+                  </p>
+                  <p className="text-sm mt-2">
+                    {searchTerm || typeFilter !== 'all'
+                      ? 'جرب تعديل الفلاتر أو مصطلح البحث'
+                      : 'ابدأ بإضافة قالب رسالة جديد'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Settings Tab */}
-      {activeTab === 'settings' && (
+      {/* Notifications Tab */}
+      {activeTab === 'notifications' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-gray-900">إعدادات الإشعارات</h3>
-            <Button variant="primary" icon={Save} iconPosition="right">
-              حفظ الإعدادات
-            </Button>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">إعدادات الإشعارات التلقائية</h3>
+              <p className="text-gray-600 mt-1">إدارة الإشعارات التي يتم إرسالها تلقائياً</p>
+            </div>
           </div>
 
           <div className="space-y-4">
             {notificationSettings.map((setting) => (
               <Card key={setting.id}>
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{setting.name}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{setting.description}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    <div className={`p-3 rounded-lg ${getTypeColor(setting.type)}`}>
+                      {setting.type === 'sms' ? <Phone className="w-5 h-5" /> :
+                       setting.type === 'email' ? <Mail className="w-5 h-5" /> :
+                       <Bell className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{setting.name}</h4>
+                      <p className="text-sm text-gray-600">{setting.description}</p>
+                      <div className="flex items-center space-x-2 space-x-reverse mt-2">
+                        <Badge variant="info" size="sm">
+                          {getTypeText(setting.type)}
+                        </Badge>
+                        <Badge variant="neutral" size="sm">
+                          {setting.recipients.length} مستقبل
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                  <Badge variant={
-                    setting.priority === 'critical' ? 'error' :
-                    setting.priority === 'high' ? 'warning' :
-                    setting.priority === 'medium' ? 'info' : 'neutral'
-                  } size="sm">
-                    {setting.priority === 'critical' ? 'حرجة' :
-                     setting.priority === 'high' ? 'عالية' :
-                     setting.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
-                  </Badge>
-                </div>
-
-                <div className="grid md:grid-cols-4 gap-4">
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <input 
-                      type="checkbox" 
-                      checked={setting.smsEnabled}
-                      onChange={(e) => {
-                        setNotificationSettings(prev => 
-                          prev.map(s => 
-                            s.id === setting.id 
-                              ? { ...s, smsEnabled: e.target.checked }
-                              : s
-                          )
-                        );
-                      }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    />
-                    <Phone className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">رسائل نصية</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <input 
-                      type="checkbox" 
-                      checked={setting.emailEnabled}
-                      onChange={(e) => {
-                        setNotificationSettings(prev => 
-                          prev.map(s => 
-                            s.id === setting.id 
-                              ? { ...s, emailEnabled: e.target.checked }
-                              : s
-                          )
-                        );
-                      }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    />
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">بريد إلكتروني</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <input 
-                      type="checkbox" 
-                      checked={setting.pushEnabled}
-                      onChange={(e) => {
-                        setNotificationSettings(prev => 
-                          prev.map(s => 
-                            s.id === setting.id 
-                              ? { ...s, pushEnabled: e.target.checked }
-                              : s
-                          )
-                        );
-                      }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    />
-                    <Bell className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">إشعار فوري</span>
-                  </div>
-
-                  <div className="flex items-center space-x-2 space-x-reverse">
-                    <input 
-                      type="checkbox" 
-                      checked={setting.whatsappEnabled}
-                      onChange={(e) => {
-                        setNotificationSettings(prev => 
-                          prev.map(s => 
-                            s.id === setting.id 
-                              ? { ...s, whatsappEnabled: e.target.checked }
-                              : s
-                          )
-                        );
-                      }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    />
-                    <MessageSquare className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">واتساب</span>
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={setting.isEnabled}
+                        onChange={() => handleToggleNotification(setting.id)}
+                        className="sr-only"
+                        id={`toggle-${setting.id}`}
+                      />
+                      <label
+                        htmlFor={`toggle-${setting.id}`}
+                        className={`flex items-center cursor-pointer w-12 h-6 rounded-full transition-colors ${
+                          setting.isEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                          setting.isEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}></div>
+                      </label>
+                    </div>
+                    <span className={`text-sm font-medium ${setting.isEnabled ? 'text-green-600' : 'text-gray-500'}`}>
+                      {setting.isEnabled ? 'مفعل' : 'معطل'}
+                    </span>
                   </div>
                 </div>
               </Card>
@@ -844,523 +617,94 @@ export default function MessagesSettingsPage() {
         </div>
       )}
 
-      {/* Logs Tab */}
-      {activeTab === 'logs' && (
-        <div className="space-y-6">
-          {/* Actions Bar */}
-          <div className="flex items-center justify-between">
-            <div className="flex space-x-3 space-x-reverse">
-              <Button variant="success" icon={Download} iconPosition="right" onClick={handleExportLogs}>
-                تصدير السجل
-              </Button>
-              <Button variant="secondary" icon={RefreshCw} iconPosition="right">
-                تحديث البيانات
-              </Button>
+      {/* History Tab */}
+      {activeTab === 'history' && (
+        <Card className="p-8">
+          <div className="text-center">
+            <div className="bg-gray-100 rounded-xl p-8 mb-4">
+              <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">سجل الرسائل المرسلة</p>
+              <p className="text-sm text-gray-500 mt-2">سيتم تطوير هذا القسم لعرض سجل جميع الرسائل المرسلة</p>
             </div>
+            <Button variant="primary">
+              عرض السجل
+            </Button>
           </div>
-
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="bg-blue-50">
-              <div className="text-center">
-                <div className="bg-blue-100 p-3 rounded-xl mb-2">
-                  <Send className="w-6 h-6 text-blue-600 mx-auto" />
-                </div>
-                <p className="text-sm text-blue-600">إجمالي الرسائل</p>
-                <p className="text-2xl font-bold text-blue-900">{filteredMessages.length.toLocaleString()}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-green-50">
-              <div className="text-center">
-                <div className="bg-green-100 p-3 rounded-xl mb-2">
-                  <CheckCircle className="w-6 h-6 text-green-600 mx-auto" />
-                </div>
-                <p className="text-sm text-green-600">تم التسليم</p>
-                <p className="text-2xl font-bold text-green-900">{filteredMessages.filter(m => m.status === 'delivered').length.toLocaleString()}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-orange-50">
-              <div className="text-center">
-                <div className="bg-orange-100 p-3 rounded-xl mb-2">
-                  <Clock className="w-6 h-6 text-orange-600 mx-auto" />
-                </div>
-                <p className="text-sm text-orange-600">في الانتظار</p>
-                <p className="text-2xl font-bold text-orange-900">{filteredMessages.filter(m => m.status === 'pending').length.toLocaleString()}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-red-50">
-              <div className="text-center">
-                <div className="bg-red-100 p-3 rounded-xl mb-2">
-                  <AlertTriangle className="w-6 h-6 text-red-600 mx-auto" />
-                </div>
-                <p className="text-sm text-red-600">فشل الإرسال</p>
-                <p className="text-2xl font-bold text-red-900">{filteredMessages.filter(m => m.status === 'failed').length.toLocaleString()}</p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Search and Filters */}
-          <Card>
-            <div className="grid md:grid-cols-5 gap-4">
-              <div className="md:col-span-2">
-                <Input
-                  type="text"
-                  icon={Search}
-                  iconPosition="right"
-                  placeholder="البحث في الرسائل (المستلم، المحتوى، الهاتف)..."
-                  value={messagesSearchTerm}
-                  onChange={(e) => setMessagesSearchTerm(e.target.value)}
-                />
-              </div>
-              
-              <div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">جميع الحالات</option>
-                  <option value="sent">تم الإرسال</option>
-                  <option value="delivered">تم التسليم</option>
-                  <option value="failed">فشل</option>
-                  <option value="pending">في الانتظار</option>
-                </select>
-              </div>
-
-              <div>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">جميع الأنواع</option>
-                  <option value="notification">إشعار</option>
-                  <option value="reminder">تذكير</option>
-                  <option value="alert">تنبيه</option>
-                  <option value="confirmation">تأكيد</option>
-                </select>
-              </div>
-
-              <div>
-                <select
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">جميع التواريخ</option>
-                  <option value="today">اليوم</option>
-                  <option value="week">هذا الأسبوع</option>
-                  <option value="month">هذا الشهر</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Results Summary */}
-            <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-              <span>عرض {startIndex + 1}-{Math.min(endIndex, filteredMessages.length)} من {filteredMessages.length} رسالة</span>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <span>عدد الرسائل في الصفحة:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm"
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={200}>200</option>
-                </select>
-              </div>
-            </div>
-          </Card>
-
-          {/* Performance Notice for Large Datasets */}
-          {filteredMessages.length > 10000 && (
-            <Card className="bg-orange-50 border-orange-200" padding="sm">
-              <div className="flex items-center space-x-2 space-x-reverse text-orange-600">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  تحذير: يوجد {filteredMessages.length.toLocaleString()} رسالة - قد يؤثر على الأداء. استخدم الفلاتر لتقليل النتائج.
-                </span>
-              </div>
-            </Card>
-          )}
-
-          {/* Logs Table */}
-          <Card padding="none" className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  سجل الرسائل ({filteredMessages.length.toLocaleString()} رسالة)
-                </h3>
-                <div className="flex items-center space-x-2 space-x-reverse text-blue-600">
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="text-sm">البيانات الوهمية</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      المستلم
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      القالب
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      النوع
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      الحالة
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      التاريخ
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      الإجراءات
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedMessages.length > 0 ? (
-                    paginatedMessages.map((message, index) => {
-                      const TypeIcon = getTypeIcon(message.type);
-                      return (
-                        <tr key={message.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="bg-gray-100 text-gray-600 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ml-3">
-                                {startIndex + index + 1}
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{message.recipientName}</div>
-                                <div className="text-sm text-gray-500">{message.recipient}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{message.templateName}</div>
-                            <div className="text-sm text-gray-500">#{message.id}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              <TypeIcon className="w-4 h-4" />
-                              <Badge variant="info" size="sm">
-                                {messageTypes.find(t => t.value === message.type)?.label || message.type}
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge variant={
-                              message.status === 'delivered' ? 'success' :
-                              message.status === 'failed' ? 'error' :
-                              message.status === 'sent' ? 'info' : 'warning'
-                            } size="sm">
-                              {getStatusText(message.status)}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="font-medium">
-                                {new Date(message.sentAt).toLocaleDateString('en-US')}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {new Date(message.sentAt).toLocaleTimeString('en-US', { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <Button 
-                              variant="secondary" 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedItem(message);
-                                setModalType('view-log');
-                                setShowModal(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="text-gray-500">
-                          <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-lg font-medium">
-                            {messagesSearchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFilter !== 'all' 
-                              ? 'لا توجد رسائل مطابقة للفلاتر' 
-                              : 'لا توجد رسائل'}
-                          </p>
-                          <p className="text-sm mt-2">
-                            {messagesSearchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFilter !== 'all'
-                              ? 'جرب تعديل الفلاتر أو مصطلح البحث'
-                              : 'لم يتم إرسال أي رسائل بعد'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
+        </Card>
       )}
 
-      {/* Statistics Tab */}
-      {activeTab === 'statistics' && (
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold text-gray-900">إحصائيات الرسائل</h3>
-          
-          {/* Overview Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-blue-50">
-              <div className="text-center">
-                <div className="bg-blue-100 p-4 rounded-xl mb-3">
-                  <Send className="w-8 h-8 text-blue-600 mx-auto" />
-                </div>
-                <p className="text-sm text-blue-600">إجمالي المرسل</p>
-                <p className="text-3xl font-bold text-blue-900">{statistics.totalSent}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-green-50">
-              <div className="text-center">
-                <div className="bg-green-100 p-4 rounded-xl mb-3">
-                  <CheckCircle className="w-8 h-8 text-green-600 mx-auto" />
-                </div>
-                <p className="text-sm text-green-600">تم التسليم</p>
-                <p className="text-3xl font-bold text-green-900">{statistics.delivered}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-red-50">
-              <div className="text-center">
-                <div className="bg-red-100 p-4 rounded-xl mb-3">
-                  <AlertTriangle className="w-8 h-8 text-red-600 mx-auto" />
-                </div>
-                <p className="text-sm text-red-600">فشل الإرسال</p>
-                <p className="text-3xl font-bold text-red-900">{statistics.failed}</p>
-              </div>
-            </Card>
-
-            <Card className="bg-purple-50">
-              <div className="text-center">
-                <div className="bg-purple-100 p-4 rounded-xl mb-3">
-                  <Star className="w-8 h-8 text-purple-600 mx-auto" />
-                </div>
-                <p className="text-sm text-purple-600">التكلفة الإجمالية</p>
-                <p className="text-3xl font-bold text-purple-900">{statistics.totalCost.toFixed(2)} ₪</p>
-              </div>
-            </Card>
-          </div>
-
-          {/* Usage by Template */}
-          <Card>
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">الاستخدام حسب القالب</h4>
-            <div className="space-y-3">
-              {messageTemplates
-                .sort((a, b) => b.usageCount - a.usageCount)
-                .slice(0, 5)
-                .map((template) => {
-                  const percentage = statistics.totalSent > 0 ? (template.usageCount / statistics.totalSent) * 100 : 0;
-                  return (
-                    <div key={template.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3 space-x-reverse">
-                        <div className={`p-2 rounded-lg ${getTypeColor(template.type)}`}>
-                          {React.createElement(getTypeIcon(template.type), { className: "w-4 h-4" })}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{template.name}</p>
-                          <p className="text-sm text-gray-600">{getCategoryText(template.category)}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-gray-900">{template.usageCount}</p>
-                        <p className="text-sm text-gray-600">{percentage.toFixed(1)}%</p>
-                      </div>
-                    </div>
-                  );
-                })}
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <Card className="p-8">
+          <div className="text-center">
+            <div className="bg-gray-100 rounded-xl p-8 mb-4">
+              <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">الإعدادات العامة للرسائل</p>
+              <p className="text-sm text-gray-500 mt-2">سيتم تطوير هذا القسم لإدارة إعدادات مزودي الخدمة</p>
             </div>
-          </Card>
-
-          {/* Performance Metrics */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Card>
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">معدلات الأداء</h4>
-              <div className="space-y-4">
-                <div className="bg-green-50 p-4 rounded-xl border border-green-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-green-700">معدل التسليم</span>
-                    <span className="text-2xl font-bold text-green-900">
-                      {statistics.totalSent > 0 ? ((statistics.delivered / statistics.totalSent) * 100).toFixed(1) : 0}%
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-blue-700">متوسط وقت التسليم</span>
-                    <span className="text-2xl font-bold text-blue-900">2.3 ثانية</span>
-                  </div>
-                </div>
-                
-                <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-purple-700">متوسط التكلفة</span>
-                    <span className="text-2xl font-bold text-purple-900">
-                      {statistics.totalSent > 0 ? (statistics.totalCost / statistics.totalSent).toFixed(3) : 0} ₪
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">التوزيع حسب النوع</h4>
-              <div className="space-y-3">
-                {messageTypes.map((type) => {
-                  const count = messageLogs.filter(log => log.type === type.value).length;
-                  const percentage = statistics.totalSent > 0 ? (count / statistics.totalSent) * 100 : 0;
-                  const TypeIcon = type.icon;
-                  
-                  return (
-                    <div key={type.value} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <TypeIcon className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-700">{type.label}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold text-gray-900">{count}</span>
-                        <span className="text-sm text-gray-600 mr-2">({percentage.toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
+            <Button variant="primary">
+              إدارة الإعدادات
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Modal for Templates and Logs */}
+      {/* Modal for Template Operations */}
       {showModal && (
         <Modal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           title={
-            modalType === 'add-template' ? 'إضافة قالب رسالة جديد' :
-            modalType === 'edit-template' ? 'تعديل قالب الرسالة' :
-            modalType === 'view-template' ? 'عرض تفاصيل القالب' :
-            modalType === 'test-template' ? 'اختبار القالب' :
-            'تفاصيل الرسالة'
+            modalType === 'add' ? 'إضافة قالب رسالة جديد' :
+            modalType === 'edit' ? 'تعديل قالب الرسالة' :
+            modalType === 'test' ? 'اختبار قالب الرسالة' :
+            'عرض تفاصيل القالب'
           }
           size="lg"
         >
           <div className="p-6">
-            {/* Add/Edit Template Form */}
-            {(modalType === 'add-template' || modalType === 'edit-template') && (
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Input
-                    label="اسم القالب *"
-                    type="text"
-                    value={templateForm.name}
-                    onChange={(e) => setTemplateForm({...templateForm, name: e.target.value})}
-                    placeholder="أدخل اسم القالب..."
-                    required
-                  />
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">نوع الرسالة *</label>
-                    <select
-                      value={templateForm.type}
-                      onChange={(e) => setTemplateForm({...templateForm, type: e.target.value as MessageTemplate['type']})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {messageTypes.map(type => (
-                        <option key={type.value} value={type.value}>{type.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">الفئة *</label>
-                    <select
-                      value={templateForm.category}
-                      onChange={(e) => setTemplateForm({...templateForm, category: e.target.value as MessageTemplate['category']})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {templateCategories.map(category => (
-                        <option key={category.value} value={category.value}>{category.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {templateForm.type === 'email' && (
-                    <Input
-                      label="موضوع الرسالة"
-                      type="text"
-                      value={templateForm.subject}
-                      onChange={(e) => setTemplateForm({...templateForm, subject: e.target.value})}
-                      placeholder="أدخل موضوع البريد الإلكتروني..."
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <Input
-                    label="محتوى الرسالة *"
-                    type="textarea"
-                    value={templateForm.content}
-                    onChange={(e) => setTemplateForm({...templateForm, content: e.target.value})}
-                    placeholder="أدخل محتوى الرسالة... استخدم {variable_name} للمتغيرات"
-                    rows={6}
-                    required
-                  />
-                  <div className="mt-2 text-sm text-gray-600">
-                    <p className="font-medium mb-1">المتغيرات المتاحة:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {['name', 'national_id', 'phone', 'address', 'package_name', 'tracking_number', 'delivery_time', 'failure_reason'].map(variable => (
-                        <button
-                          key={variable}
-                          onClick={() => {
-                            const newContent = templateForm.content + `{${variable}}`;
-                            setTemplateForm({...templateForm, content: newContent});
-                          }}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs hover:bg-blue-200 transition-colors"
-                        >
-                          {variable}
-                        </button>
-                      ))}
+            {modalType === 'view' && selectedTemplate && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                  <h4 className="font-semibold text-blue-800 mb-3">تفاصيل القالب</h4>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-blue-700">اسم القالب:</span>
+                      <span className="font-medium text-blue-900 mr-2">{selectedTemplate.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">النوع:</span>
+                      <Badge variant="info" size="sm" className="mr-2">
+                        {getTypeText(selectedTemplate.type)}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">الحالة:</span>
+                      <Badge variant={selectedTemplate.isActive ? 'success' : 'neutral'} size="sm" className="mr-2">
+                        {selectedTemplate.isActive ? 'مفعل' : 'معطل'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">عدد مرات الاستخدام:</span>
+                      <span className="font-medium text-blue-900 mr-2">{selectedTemplate.usageCount}</span>
                     </div>
                   </div>
                 </div>
 
-                {extractVariables(templateForm.content).length > 0 && (
-                  <div>
-                    <span className="font-medium text-gray-700">المتغيرات المكتشفة:</span>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {extractVariables(templateForm.content).map(variable => (
-                        <Badge key={variable} variant="info" size="sm">
-                          {variable}
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <h5 className="font-medium text-gray-800 mb-2">محتوى الرسالة:</h5>
+                  <div className="bg-white p-3 rounded border text-sm text-gray-700">
+                    {selectedTemplate.content}
+                  </div>
+                </div>
+
+                {selectedTemplate.variables.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                    <h5 className="font-medium text-green-800 mb-2">المتغيرات المستخدمة:</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTemplate.variables.map(variable => (
+                        <Badge key={variable} variant="success" size="sm">
+                          {`{${variable}}`}
                         </Badge>
                       ))}
                     </div>
@@ -1369,179 +713,96 @@ export default function MessagesSettingsPage() {
 
                 <div className="flex space-x-3 space-x-reverse justify-end pt-4">
                   <Button variant="secondary" onClick={() => setShowModal(false)}>
-                    إلغاء
-                  </Button>
-                  <Button variant="primary" onClick={handleSaveTemplate}>
-                    {modalType === 'add-template' ? 'إضافة القالب' : 'حفظ التغييرات'}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* View Template */}
-            {modalType === 'view-template' && selectedItem && (
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <div className="grid md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">اسم القالب:</span>
-                      <p className="text-gray-900 mt-1">{selectedItem.name}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">النوع:</span>
-                      <Badge variant="info" size="sm" className="mt-1">
-                        {messageTypes.find(t => t.value === selectedItem.type)?.label}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">الفئة:</span>
-                      <Badge variant="neutral" size="sm" className="mt-1">
-                        {getCategoryText(selectedItem.category)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">عدد مرات الاستخدام:</span>
-                      <p className="text-gray-900 mt-1">{selectedItem.usageCount}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedItem.subject && (
-                  <div>
-                    <span className="font-medium text-gray-700">الموضوع:</span>
-                    <p className="text-gray-900 mt-1 bg-gray-50 p-3 rounded-lg">{selectedItem.subject}</p>
-                  </div>
-                )}
-
-                <div>
-                  <span className="font-medium text-gray-700">المحتوى:</span>
-                  <p className="text-gray-900 mt-1 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">{selectedItem.content}</p>
-                </div>
-
-                <div>
-                  <span className="font-medium text-gray-700">المتغيرات:</span>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedItem.variables.map((variable: string) => (
-                      <Badge key={variable} variant="info" size="sm">
-                        {variable}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex space-x-3 space-x-reverse justify-end pt-4">
-                  <Button variant="secondary" onClick={() => setShowModal(false)}>
                     إغلاق
                   </Button>
-                  <Button variant="warning" onClick={() => handleTestTemplate(selectedItem)}>
-                    اختبار القالب
-                  </Button>
-                  <Button variant="primary" onClick={() => handleEditTemplate(selectedItem)}>
+                  <Button variant="primary" onClick={() => setModalType('edit')}>
                     تعديل القالب
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Test Template */}
-            {modalType === 'test-template' && selectedItem && (
+            {modalType === 'test' && selectedTemplate && (
               <div className="space-y-4">
                 <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                  <h4 className="font-medium text-yellow-800 mb-2">اختبار القالب: {selectedItem.name}</h4>
+                  <h4 className="font-semibold text-yellow-800 mb-3">اختبار قالب: {selectedTemplate.name}</h4>
                   <p className="text-yellow-700 text-sm">سيتم إرسال رسالة تجريبية باستخدام هذا القالب</p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف التجريبي</label>
-                  <input
-                    type="tel"
-                    defaultValue="0591234567"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="أدخل رقم الهاتف..."
-                  />
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <h5 className="font-medium text-gray-800 mb-2">معاينة الرسالة:</h5>
+                  <div className="bg-gray-50 p-3 rounded text-sm text-gray-700">
+                    {selectedTemplate.content.replace(/{(\w+)}/g, (match, variable) => {
+                      const sampleValues: { [key: string]: string } = {
+                        name: 'أحمد محمد',
+                        nationalId: '900123456',
+                        packageName: 'طرد مواد غذائية',
+                        deliveryTime: '2024-12-21 10:30',
+                        appointmentTime: 'غداً الساعة 10:00 صباحاً',
+                        location: 'مكتب التوزيع - خان يونس'
+                      };
+                      return sampleValues[variable] || `{${variable}}`;
+                    })}
+                  </div>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h5 className="font-medium text-gray-900 mb-2">معاينة الرسالة:</h5>
-                  <p className="text-gray-700 bg-white p-3 rounded border text-sm whitespace-pre-wrap">
-                    {selectedItem.content
-                      .replace('{name}', 'محمد التجريبي')
-                      .replace('{national_id}', '900123456')
-                      .replace('{phone}', '0591234567')
-                      .replace('{package_name}', 'طرد مواد غذائية')
-                      .replace('{tracking_number}', 'TRK-2024-001')
-                      .replace('{delivery_time}', '10:00 صباحاً')
-                      .replace('{failure_reason}', 'عدم توفر المستفيد')
-                      .replace('{days_delayed}', '3')
-                      .replace('{beneficiary_name}', 'محمد التجريبي')
-                    }
-                  </p>
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                  <h5 className="font-medium text-blue-800 mb-2">إعدادات الاختبار:</h5>
+                  <div className="space-y-3">
+                    <Input
+                      label="رقم الهاتف للاختبار"
+                      type="tel"
+                      placeholder="0591234567"
+                    />
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <input
+                        type="checkbox"
+                        id="test-mode"
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="test-mode" className="text-sm text-gray-700">
+                        وضع الاختبار (لن يتم إرسال رسالة فعلية)
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex space-x-3 space-x-reverse justify-end pt-4">
                   <Button variant="secondary" onClick={() => setShowModal(false)}>
                     إلغاء
                   </Button>
-                  <Button variant="warning" onClick={handleTestSend}>
-                    إرسال تجريبي
+                  <Button 
+                    variant="warning" 
+                    onClick={() => {
+                      setNotification({ message: 'تم إرسال رسالة اختبار بنجاح', type: 'success' });
+                      setTimeout(() => setNotification(null), 3000);
+                      setShowModal(false);
+                    }}
+                  >
+                    إرسال اختبار
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* View Log Details */}
-            {modalType === 'view-log' && selectedItem && (
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h4 className="font-semibold text-gray-900 mb-3">تفاصيل الرسالة</h4>
-                  <div className="grid md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">القالب:</span>
-                      <p className="text-gray-900 mt-1">{selectedItem.templateName}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">النوع:</span>
-                      <Badge variant="info" size="sm" className="mt-1">
-                        {messageTypes.find(t => t.value === selectedItem.type)?.label}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">المستلم:</span>
-                      <p className="text-gray-900 mt-1">{selectedItem.recipientName}</p>
-                      <p className="text-gray-600 text-xs">{selectedItem.recipient}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">الحالة:</span>
-                      <Badge variant={
-                        selectedItem.status === 'delivered' ? 'success' :
-                        selectedItem.status === 'failed' ? 'error' :
-                        selectedItem.status === 'sent' ? 'info' : 'warning'
-                      } size="sm" className="mt-1">
-                        {getStatusText(selectedItem.status)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">تاريخ الإرسال:</span>
-                      <p className="text-gray-900 mt-1">{new Date(selectedItem.sentAt).toLocaleString('en-US')}</p>
-                    </div>
-                    {selectedItem.deliveredAt && (
-                      <div>
-                        <span className="font-medium text-gray-700">تاريخ التسليم:</span>
-                        <p className="text-gray-900 mt-1">{new Date(selectedItem.deliveredAt).toLocaleString('en-US')}</p>
-                      </div>
-                    )}
-                    {selectedItem.failureReason && (
-                      <div className="md:col-span-2">
-                        <span className="font-medium text-gray-700">سبب الفشل:</span>
-                        <p className="text-red-600 mt-1">{selectedItem.failureReason}</p>
-                      </div>
-                    )}
-                  </div>
+            {(modalType === 'add' || modalType === 'edit') && (
+              <div className="text-center">
+                <div className="bg-gray-100 p-8 rounded-2xl mb-6">
+                  <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h4 className="text-xl font-bold text-gray-900 mb-3">
+                    {modalType === 'add' ? 'إضافة قالب رسالة جديد' : 'تعديل قالب الرسالة'}
+                  </h4>
+                  <p className="text-gray-600">
+                    سيتم تطوير نموذج {modalType === 'add' ? 'إضافة' : 'تعديل'} قالب الرسالة هنا
+                  </p>
                 </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button variant="primary" onClick={() => setShowModal(false)}>
-                    إغلاق
+                
+                <div className="flex space-x-3 space-x-reverse justify-center">
+                  <Button variant="secondary" onClick={() => setShowModal(false)}>
+                    إلغاء
+                  </Button>
+                  <Button variant="primary">
+                    {modalType === 'add' ? 'إضافة القالب' : 'حفظ التغييرات'}
                   </Button>
                 </div>
               </div>
@@ -1559,7 +820,7 @@ export default function MessagesSettingsPage() {
             <ul className="text-sm text-blue-700 space-y-2">
               <li className="flex items-start space-x-2 space-x-reverse">
                 <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>استخدم المتغيرات مثل {'{name}'} لتخصيص الرسائل تلقائياً</span>
+                <span>استخدم المتغيرات مثل {`{name}`} و {`{nationalId}`} لتخصيص الرسائل</span>
               </li>
               <li className="flex items-start space-x-2 space-x-reverse">
                 <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
@@ -1567,11 +828,11 @@ export default function MessagesSettingsPage() {
               </li>
               <li className="flex items-start space-x-2 space-x-reverse">
                 <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>راقب إحصائيات التسليم لتحسين فعالية الرسائل</span>
+                <span>القوالب المعطلة لن تُستخدم في الإشعارات التلقائية</span>
               </li>
               <li className="flex items-start space-x-2 space-x-reverse">
-                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>استخدم أولويات مختلفة للرسائل حسب أهميتها</span>
+                <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                <span>تأكد من صحة أرقام الهواتف قبل إرسال الرسائل النصية</span>
               </li>
             </ul>
           </div>
