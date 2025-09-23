@@ -257,6 +257,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       'overview': 'نظرة شاملة على النظام والأنشطة',
       'beneficiaries-list': 'إدارة جميع المستفيدين المسجلين في النظام',
       'bulk-tasks': 'إنشاء مهام توزيع جماعية للمستفيدين المحددين',
+      'bulk-tasks-test': 'نسخة محسنة من صفحة المهام الجماعية للاختبار والمقارنة',
       'status-management': 'تصنيف وإدارة حالات الأهلية للمستفيدين',
       'delayed': 'المستفيدين الذين لم يستلموا طرودهم في الوقت المحدد',
       'activity-log': 'سجل جميع الأنشطة والعمليات في النظام',
