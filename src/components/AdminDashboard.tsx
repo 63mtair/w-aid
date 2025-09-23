@@ -100,6 +100,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       children: [
         { id: 'packages-list', name: 'قوالب الطرود', icon: Package },
         { id: 'bulk-tasks', name: 'المهام الجماعية', icon: Send },
+        { id: 'bulk-tasks-test', name: 'المهام الجماعية (اختبار)', icon: Send },
         { id: 'tracking', name: 'تتبع الإرسالات', icon: Truck },
         { id: 'distribution-reports', name: 'تقارير التوزيع', icon: BarChart3 },
         { id: 'alerts', name: 'التنبيهات', icon: Bell }
