@@ -138,15 +138,8 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
         { id: 'permissions', name: 'إدارة الصلاحيات', icon: Shield },
         { id: 'messages', name: 'إعدادات الرسائل', icon: MessageSquare },
         { id: 'system', name: 'إعدادات النظام', icon: Settings },
-        { id: 'audit', name: 'سجل المراجعة', icon: Activity }
-      ]
-    },
-    {
-      id: 'development',
-      name: 'أدوات التطوير',
-      icon: Settings,
-      children: [
-        { id: 'test-supabase', name: 'اختبار Supabase', icon: Database }
+        { id: 'audit', name: 'سجل المراجعة', icon: Activity },
+        { id: 'test-supabase', name: 'اختبار قاعدة البيانات', icon: Database }
       ]
     }
   ];
@@ -155,7 +148,8 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
     { id: 'permissions', name: 'إدارة الصلاحيات', icon: Shield, description: 'إدارة أدوار المستخدمين وصلاحياتهم' },
     { id: 'messages', name: 'إعدادات الرسائل', icon: MessageSquare, description: 'إدارة قوالب الرسائل والتنبيهات' },
     { id: 'system', name: 'إعدادات النظام', icon: Settings, description: 'الإعدادات العامة للنظام' },
-    { id: 'audit', name: 'سجل المراجعة', icon: Activity, description: 'سجل جميع العمليات في النظام' }
+    { id: 'audit', name: 'سجل المراجعة', icon: Activity, description: 'سجل جميع العمليات في النظام' },
+    { id: 'test-supabase', name: 'اختبار قاعدة البيانات', icon: Database, description: 'اختبار الاتصال وجلب البيانات من قاعدة البيانات' }
   ];
 
   React.useEffect(() => {
@@ -285,7 +279,8 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       'messages': 'إدارة قوالب الرسائل والتنبيهات',
       'system': 'الإعدادات العامة للنظام',
       'backup': 'إدارة النسخ الاحتياطية للبيانات',
-      'audit': 'سجل جميع العمليات في النظام'
+      'audit': 'سجل جميع العمليات في النظام',
+      'test-supabase': 'اختبار الاتصال وجلب البيانات من قاعدة البيانات'
     };
     return descriptions[tabId] || '';
   };
