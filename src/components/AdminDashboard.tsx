@@ -95,13 +95,14 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
     },
     {
       id: 'packages',
-      name: 'إدارة الإرسالات',
+      name: 'إدارة الإرسالات والتنبيهات',
       icon: Package,
       children: [
         { id: 'packages-list', name: 'قوالب الطرود', icon: Package },
         { id: 'bulk-tasks', name: 'المهام الجماعية', icon: Send },
         { id: 'tracking', name: 'تتبع الإرسالات', icon: Truck },
-        { id: 'distribution-reports', name: 'تقارير التوزيع', icon: BarChart3 }
+        { id: 'distribution-reports', name: 'تقارير التوزيع', icon: BarChart3 },
+        { id: 'alerts', name: 'التنبيهات', icon: Bell }
       ]
     },
     {
@@ -120,15 +121,6 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       children: [
         { id: 'couriers', name: 'إدارة المندوبين', icon: Truck },
         { id: 'tasks', name: 'إدارة المهام', icon: Clock }
-      ]
-    },
-    {
-      id: 'reports-alerts',
-      name: 'التقارير والتنبيهات',
-      icon: BarChart3,
-      children: [
-        { id: 'reports', name: 'التقارير الشاملة', icon: BarChart3 },
-        { id: 'alerts', name: 'التنبيهات', icon: Bell }
       ]
     },
     {
