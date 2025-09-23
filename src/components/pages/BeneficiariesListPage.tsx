@@ -34,6 +34,7 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
   const [itemsPerPage] = useState(20);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     governorate: '',
     city: '',
@@ -240,6 +241,24 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
     setShowConfirmModal(true);
   };
 
+  const handleAttemptCloseModal = () => {
+    if (hasUnsavedChanges) {
+      setShowConfirmModal(true);
+    } else {
+      handleCloseModal();
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedBeneficiary(null);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleConfirmCloseModal = () => {
+    setShowConfirmModal(false);
+    handleCloseModal();
+  };
   const executeConfirmedAction = async () => {
     if (!confirmAction) return;
     
@@ -1027,7 +1046,8 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
       {showModal && (
         <Modal
           isOpen={showModal}
-          onClose={() => setShowModal(false)}
+          onClose={handleCloseModal}
+          onAttemptClose={handleAttemptCloseModal}
           title={
             modalType === 'add' ? 'إضافة مستفيد جديد' :
             modalType === 'edit' ? 'تعديل بيانات المستفيد' :
@@ -1041,13 +1061,10 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
                   beneficiary={modalType === 'edit' ? selectedBeneficiary : null}
                   onSave={() => {
                     refetch();
-                    setShowModal(false);
-                    setSelectedBeneficiary(null);
+                    handleCloseModal();
                   }}
-                  onCancel={() => {
-                    setShowModal(false);
-                    setSelectedBeneficiary(null);
-                  }}
+                  onCancel={handleCloseModal}
+                  onUnsavedChanges={setHasUnsavedChanges}
                 />
               ) : (
                 <>
@@ -1060,7 +1077,7 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
                   <div className="flex space-x-3 space-x-reverse justify-center">
                     <Button
                       variant="secondary"
-                      onClick={() => setShowModal(false)}
+                      onClick={handleCloseModal}
                     >
                       إلغاء
                     </Button>
@@ -1078,14 +1095,19 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
       <ConfirmationModal
         isOpen={showConfirmModal}
         onClose={() => {
-          setShowConfirmModal(false);
-          setConfirmAction(null);
+          if (confirmAction) {
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+          } else {
+            setShowConfirmModal(false);
+          }
         }}
-        onConfirm={executeConfirmedAction}
-        title={getConfirmationMessage().title}
-        message={getConfirmationMessage().message}
-        confirmButtonText={getConfirmationMessage().confirmText}
-        confirmButtonVariant={getConfirmationMessage().variant}
+        onConfirm={confirmAction ? executeConfirmedAction : handleConfirmCloseModal}
+        title={confirmAction ? getConfirmationMessage().title : "تجاهل التغييرات؟"}
+        message={confirmAction ? getConfirmationMessage().message : "لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"}
+        confirmButtonText={confirmAction ? getConfirmationMessage().confirmText : "تجاهل التغييرات"}
+        cancelButtonText={confirmAction ? "إلغاء" : "البقاء في النموذج"}
+        confirmButtonVariant={confirmAction ? getConfirmationMessage().variant : "warning"}
         type="warning"
       />
 
