@@ -5,6 +5,8 @@ import BeneficiaryProfileModal from '../BeneficiaryProfileModal';
 import { Button, Card, Input, Badge, ConfirmationModal } from '../ui';
 import { useBeneficiaries } from '../../hooks/useBeneficiaries';
 import { useErrorLogger } from '../../utils/errorLogger';
+import { useAuditLogger } from '../../utils/auditLogger';
+import { useAuth } from '../../context/AuthContext';
 
 interface StatusManagementPageProps {
   onNavigateToIndividualSend: (beneficiaryId: string) => void;
@@ -12,6 +14,8 @@ interface StatusManagementPageProps {
 
 export default function StatusManagementPage({ onNavigateToIndividualSend }: StatusManagementPageProps) {
   const { logInfo, logError } = useErrorLogger();
+  const { logAction } = useAuditLogger();
+  const { loggedInUser } = useAuth();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
   
@@ -238,6 +242,29 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
             if (beneficiaryIndex !== -1) {
               mockBeneficiaries[beneficiaryIndex].identityStatus = 'verified';
               mockBeneficiaries[beneficiaryIndex].updatedAt = new Date().toISOString();
+              
+              // تسجيل في سجل المراجعة
+              if (loggedInUser) {
+                logAction(
+                  loggedInUser.id,
+                  loggedInUser.name,
+                  loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+                  'approve',
+                  'beneficiary',
+                  confirmAction.beneficiaryId,
+                  confirmAction.beneficiaryName || 'غير محدد',
+                  `تم توثيق هوية المستفيد: ${confirmAction.beneficiaryName}`,
+                  {
+                    details: {
+                      oldValues: { identityStatus: 'pending' },
+                      newValues: { identityStatus: 'verified' },
+                      reason: 'تم قبول الوثائق المقدمة'
+                    },
+                    severity: 'medium',
+                    category: 'data'
+                  }
+                );
+              }
             }
             logInfo(`تم توثيق هوية المستفيد: ${confirmAction.beneficiaryName}`, 'StatusManagementPage');
           }
@@ -250,6 +277,29 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
             if (beneficiaryIndex !== -1) {
               mockBeneficiaries[beneficiaryIndex].identityStatus = 'pending';
               mockBeneficiaries[beneficiaryIndex].updatedAt = new Date().toISOString();
+              
+              // تسجيل في سجل المراجعة
+              if (loggedInUser) {
+                logAction(
+                  loggedInUser.id,
+                  loggedInUser.name,
+                  loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+                  'reject',
+                  'beneficiary',
+                  confirmAction.beneficiaryId,
+                  confirmAction.beneficiaryName || 'غير محدد',
+                  `تم طلب إعادة رفع الوثائق من المستفيد: ${confirmAction.beneficiaryName}`,
+                  {
+                    details: {
+                      oldValues: { identityStatus: 'rejected' },
+                      newValues: { identityStatus: 'pending' },
+                      reason: 'طلب إعادة رفع الوثائق'
+                    },
+                    severity: 'medium',
+                    category: 'data'
+                  }
+                );
+              }
             }
             logInfo(`تم طلب إعادة رفع الوثائق من المستفيد: ${confirmAction.beneficiaryName}. سيتم إرسال إشعار له لرفع وثائق جديدة.`, 'StatusManagementPage');
           }
@@ -265,6 +315,28 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 mockBeneficiaries[beneficiaryIndex].updatedAt = new Date().toISOString();
               }
             });
+            
+            // تسجيل في سجل المراجعة
+            if (loggedInUser) {
+              logAction(
+                loggedInUser.id,
+                loggedInUser.name,
+                loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+                'approve',
+                'beneficiary',
+                'batch',
+                `${confirmAction.beneficiaryIds.length} مستفيد`,
+                `تم توثيق ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي`,
+                {
+                  details: {
+                    newValues: { identityStatus: 'verified' },
+                    additionalInfo: { beneficiaryIds: confirmAction.beneficiaryIds }
+                  },
+                  severity: 'medium',
+                  category: 'data'
+                }
+              );
+            }
             logInfo(`تم توثيق ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي`, 'StatusManagementPage');
             setSelectedBeneficiaries([]);
           }
@@ -280,6 +352,28 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 mockBeneficiaries[beneficiaryIndex].updatedAt = new Date().toISOString();
               }
             });
+            
+            // تسجيل في سجل المراجعة
+            if (loggedInUser) {
+              logAction(
+                loggedInUser.id,
+                loggedInUser.name,
+                loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+                'reject',
+                'beneficiary',
+                'batch',
+                `${confirmAction.beneficiaryIds.length} مستفيد`,
+                `تم طلب إعادة رفع الوثائق من ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي`,
+                {
+                  details: {
+                    newValues: { identityStatus: 'pending' },
+                    additionalInfo: { beneficiaryIds: confirmAction.beneficiaryIds }
+                  },
+                  severity: 'medium',
+                  category: 'data'
+                }
+              );
+            }
             logInfo(`تم طلب إعادة رفع الوثائق من ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي. سيتم إرسال إشعارات لهم لرفع وثائق جديدة.`, 'StatusManagementPage');
             setSelectedBeneficiaries([]);
           }
@@ -292,6 +386,29 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
             if (beneficiaryIndex !== -1) {
               mockBeneficiaries[beneficiaryIndex].status = 'suspended';
               mockBeneficiaries[beneficiaryIndex].updatedAt = new Date().toISOString();
+              
+              // تسجيل في سجل المراجعة
+              if (loggedInUser) {
+                logAction(
+                  loggedInUser.id,
+                  loggedInUser.name,
+                  loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+                  'suspend',
+                  'beneficiary',
+                  confirmAction.beneficiaryId,
+                  confirmAction.beneficiaryName || 'غير محدد',
+                  `تم تعليق حساب المستفيد: ${confirmAction.beneficiaryName}`,
+                  {
+                    details: {
+                      oldValues: { status: 'active' },
+                      newValues: { status: 'suspended' },
+                      reason: 'تعليق إداري'
+                    },
+                    severity: 'high',
+                    category: 'security'
+                  }
+                );
+              }
             }
             logInfo(`تم تعليق حساب المستفيد: ${confirmAction.beneficiaryName}. تم إيقاف جميع الخدمات وسيتم إشعار المستفيد.`, 'StatusManagementPage');
           }

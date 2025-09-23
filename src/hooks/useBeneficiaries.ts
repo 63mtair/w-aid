@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { type Beneficiary, mockBeneficiaries } from '../data/mockData';
 import { useErrorLogger } from '../utils/errorLogger';
+import { useAuditLogger } from '../utils/auditLogger';
+import { useAuth } from '../context/AuthContext';
 
 interface UseBeneficiariesOptions {
   organizationId?: string;
@@ -28,6 +30,8 @@ export const useBeneficiaries = (options: UseBeneficiariesOptions = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { logInfo, logError } = useErrorLogger();
+  const { logAction } = useAuditLogger();
+  const { loggedInUser } = useAuth();
 
   // جلب البيانات
   useEffect(() => {
@@ -269,6 +273,33 @@ export const useBeneficiaries = (options: UseBeneficiariesOptions = {}) => {
       };
 
       setBeneficiaries(prev => [newBeneficiary, ...prev]);
+      
+      // تسجيل في سجل المراجعة
+      if (loggedInUser) {
+        logAction(
+          loggedInUser.id,
+          loggedInUser.name,
+          loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+          'create',
+          'beneficiary',
+          newBeneficiary.id,
+          newBeneficiary.name,
+          `تم إضافة مستفيد جديد: ${newBeneficiary.name} (${newBeneficiary.nationalId})`,
+          {
+            details: {
+              newValues: {
+                name: newBeneficiary.name,
+                nationalId: newBeneficiary.nationalId,
+                phone: newBeneficiary.phone,
+                address: newBeneficiary.address
+              }
+            },
+            severity: 'low',
+            category: 'data'
+          }
+        );
+      }
+      
       logInfo(`تم إضافة مستفيد جديد: ${newBeneficiary.name}`, 'useBeneficiaries');
       return newBeneficiary;
     } catch (err) {
@@ -285,6 +316,9 @@ export const useBeneficiaries = (options: UseBeneficiariesOptions = {}) => {
     try {
       setLoading(true);
       
+      // الحصول على القيم القديمة للمقارنة
+      const oldBeneficiary = beneficiaries.find(b => b.id === id);
+      
       setBeneficiaries(prev => 
         prev.map(b => 
           b.id === id 
@@ -292,6 +326,33 @@ export const useBeneficiaries = (options: UseBeneficiariesOptions = {}) => {
             : b
         )
       );
+      
+      // تسجيل في سجل المراجعة
+      if (loggedInUser && oldBeneficiary) {
+        logAction(
+          loggedInUser.id,
+          loggedInUser.name,
+          loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+          'update',
+          'beneficiary',
+          id,
+          oldBeneficiary.name,
+          `تم تحديث بيانات المستفيد: ${oldBeneficiary.name}`,
+          {
+            details: {
+              oldValues: {
+                name: oldBeneficiary.name,
+                phone: oldBeneficiary.phone,
+                address: oldBeneficiary.address,
+                status: oldBeneficiary.status
+              },
+              newValues: updates
+            },
+            severity: 'low',
+            category: 'data'
+          }
+        );
+      }
       
       logInfo(`تم تحديث المستفيد: ${id}`, 'useBeneficiaries');
     } catch (err) {
@@ -308,7 +369,37 @@ export const useBeneficiaries = (options: UseBeneficiariesOptions = {}) => {
     try {
       setLoading(true);
       
+      // الحصول على بيانات المستفيد قبل الحذف
+      const beneficiaryToDelete = beneficiaries.find(b => b.id === id);
+      
       setBeneficiaries(prev => prev.filter(b => b.id !== id));
+      
+      // تسجيل في سجل المراجعة
+      if (loggedInUser && beneficiaryToDelete) {
+        logAction(
+          loggedInUser.id,
+          loggedInUser.name,
+          loggedInUser.roleId === '1' ? 'مدير النظام' : 'مشرف',
+          'delete',
+          'beneficiary',
+          id,
+          beneficiaryToDelete.name,
+          `تم حذف المستفيد: ${beneficiaryToDelete.name} (${beneficiaryToDelete.nationalId})`,
+          {
+            details: {
+              oldValues: {
+                name: beneficiaryToDelete.name,
+                nationalId: beneficiaryToDelete.nationalId,
+                phone: beneficiaryToDelete.phone,
+                address: beneficiaryToDelete.address
+              }
+            },
+            severity: 'high',
+            category: 'data'
+          }
+        );
+      }
+      
       logInfo(`تم حذف المستفيد: ${id}`, 'useBeneficiaries');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'خطأ في حذف المستفيد';

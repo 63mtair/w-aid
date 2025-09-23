@@ -25,7 +25,7 @@ import TestSupabasePage from './pages/TestSupabasePage';
 import TasksManagementPage from './pages/TasksManagementPage';
 import ComprehensiveReportsPage from './pages/ComprehensiveReportsPage';
 import SystemSettingsPage from './pages/SystemSettingsPage';
-import BackupManagementPage from './pages/BackupManagementPage';
+import AuditLogPage from './pages/AuditLogPage';
 import AlertsManagementPage from './pages/AlertsManagementPage';
 import MessagesSettingsPage from './pages/MessagesSettingsPage';
 
@@ -138,7 +138,6 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
         { id: 'permissions', name: 'إدارة الصلاحيات', icon: Shield },
         { id: 'messages', name: 'إعدادات الرسائل', icon: MessageSquare },
         { id: 'system', name: 'إعدادات النظام', icon: Settings },
-        { id: 'backup', name: 'النسخ الاحتياطي', icon: Database },
         { id: 'audit', name: 'سجل المراجعة', icon: Activity }
       ]
     },
@@ -156,7 +155,6 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
     { id: 'permissions', name: 'إدارة الصلاحيات', icon: Shield, description: 'إدارة أدوار المستخدمين وصلاحياتهم' },
     { id: 'messages', name: 'إعدادات الرسائل', icon: MessageSquare, description: 'إدارة قوالب الرسائل والتنبيهات' },
     { id: 'system', name: 'إعدادات النظام', icon: Settings, description: 'الإعدادات العامة للنظام' },
-    { id: 'backup', name: 'النسخ الاحتياطي', icon: Database, description: 'إدارة النسخ الاحتياطية للبيانات' },
     { id: 'audit', name: 'سجل المراجعة', icon: Activity, description: 'سجل جميع العمليات في النظام' }
   ];
 
@@ -980,7 +978,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       );
     }
 
-    if (activeTab === 'backup') {
+    if (activeTab === 'audit') {
       return (
         <div className="space-y-6">
           <div className="flex items-center space-x-4 space-x-reverse">
@@ -992,7 +990,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
               <p className="text-gray-600 mt-1">{pageInfo.description}</p>
             </div>
           </div>
-          <BackupManagementPage />
+          <AuditLogPage />
         </div>
       );
     }
