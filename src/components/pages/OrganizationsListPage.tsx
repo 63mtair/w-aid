@@ -17,8 +17,6 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view'>('add');
   const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
   const { logError, logInfo } = useErrorLogger();
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // استخدام البيانات الوهمية مباشرة
   const organizations = mockOrganizations;
@@ -143,26 +141,7 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
     alert('تم تصدير تقرير المؤسسات بنجاح');
   };
 
-  const handleAttemptCloseModal = () => {
-    if (hasUnsavedChanges && (modalType === 'add' || modalType === 'edit')) {
-      setShowConfirmModal(true);
-    } else {
-      handleCloseModal();
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedOrganization(null);
-    setHasUnsavedChanges(false);
-  };
-
-  const handleConfirmCloseModal = () => {
-    setShowConfirmModal(false);
-    handleCloseModal();
-  };
   return (
-    <>
     <div className="space-y-6">
       {/* Data Source Indicator */}
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
@@ -419,17 +398,21 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
 
       {/* Modal for Add/Edit/View */}
       {showModal && (
-        <Modal
-          isOpen={showModal}
-          onClose={handleCloseModal}
-          onAttemptClose={handleAttemptCloseModal}
-          title={
-            modalType === 'add' ? 'إضافة مؤسسة جديدة' :
-            modalType === 'edit' ? 'تعديل بيانات المؤسسة' :
-            'عرض تفاصيل المؤسسة'
-          }
-          size="lg"
-        >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir="rtl">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                {modalType === 'add' ? 'إضافة مؤسسة جديدة' :
+                 modalType === 'edit' ? 'تعديل بيانات المؤسسة' :
+                 'عرض تفاصيل المؤسسة'}
+              </h3>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
             
             {(modalType === 'add' || modalType === 'edit') && (
               <OrganizationForm
@@ -440,11 +423,14 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
                   } else if (modalType === 'edit' && selectedOrganization) {
                     update(selectedOrganization.id, data);
                   }
-                  handleCloseModal();
+                  setShowModal(false);
+                  setSelectedOrganization(null);
                   refetch(); // Trigger re-render of the list
                 }}
-                onCancel={handleCloseModal}
-                onUnsavedChanges={setHasUnsavedChanges}
+                onCancel={() => {
+                  setShowModal(false);
+                  setSelectedOrganization(null);
+                }}
               />
             )}
             {modalType === 'view' && selectedOrganization && (
@@ -457,36 +443,12 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
                 <p>الهاتف: {selectedOrganization.phone}</p>
                 <p>البريد الإلكتروني: {selectedOrganization.email}</p>
                 <p>الحالة: {selectedOrganization.status}</p>
-                <Button onClick={handleCloseModal} className="mt-4">إغلاق</Button>
+                <Button onClick={() => setShowModal(false)} className="mt-4">إغلاق</Button>
               </div>
             )}
-        </Modal>
+          </div>
+        </div>
       )}
     </div>
-      {/* Confirmation Modal for Unsaved Changes */}
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmCloseModal}
-        title="تجاهل التغييرات؟"
-        message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
-        confirmButtonText="تجاهل التغييرات"
-        cancelButtonText="البقاء في النموذج"
-        type="warning"
-        confirmButtonVariant="warning"
-      />
-    {/* Confirmation Modal for Unsaved Changes */}
-    <ConfirmationModal
-      isOpen={showConfirmModal}
-      onClose={() => setShowConfirmModal(false)}
-      onConfirm={handleConfirmCloseModal}
-      title="تجاهل التغييرات؟"
-      message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
-      confirmButtonText="تجاهل التغييرات"
-      cancelButtonText="البقاء في النموذج"
-      type="warning"
-      confirmButtonVariant="warning"
-    />
-    </>
   );
 }

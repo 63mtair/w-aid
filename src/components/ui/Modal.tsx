@@ -4,23 +4,19 @@ import { X } from 'lucide-react';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAttemptClose?: () => void;
   title?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  preventCloseOnBackdrop?: boolean;
 }
 
 export default function Modal({
   isOpen,
   onClose,
-  onAttemptClose,
   title,
   children,
   size = 'md',
-  className = '',
-  preventCloseOnBackdrop = false
+  className = ''
 }: ModalProps) {
   if (!isOpen) return null;
 
@@ -32,22 +28,11 @@ export default function Modal({
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !preventCloseOnBackdrop) {
-      if (onAttemptClose) {
-        onAttemptClose();
-      } else {
-        onClose();
-      }
-    }
-  };
-
-  const handleCloseClick = () => {
-    if (onAttemptClose) {
-      onAttemptClose();
-    } else {
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
@@ -60,7 +45,7 @@ export default function Modal({
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
             <button 
-              onClick={handleCloseClick}
+              onClick={onClose}
               className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <X className="w-5 h-5" />

@@ -8,7 +8,6 @@ interface BeneficiaryFormProps {
   beneficiary?: Beneficiary | null;
   onSave: () => void;
   onCancel: () => void;
-  onUnsavedChanges?: (hasChanges: boolean) => void;
 }
 
 interface FormData {
@@ -33,7 +32,7 @@ interface FormData {
   notes: string;
 }
 
-export default function BeneficiaryForm({ beneficiary, onSave, onCancel, onUnsavedChanges }: BeneficiaryFormProps) {
+export default function BeneficiaryForm({ beneficiary, onSave, onCancel }: BeneficiaryFormProps) {
   const { logError, logInfo } = useErrorLogger();
   
   const [formData, setFormData] = useState<FormData>({
@@ -61,14 +60,12 @@ export default function BeneficiaryForm({ beneficiary, onSave, onCancel, onUnsav
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
-  const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const isEditing = !!beneficiary;
 
   useEffect(() => {
     if (beneficiary) {
-      const initialData = {
+      setFormData({
         name: beneficiary.name || '',
         fullName: beneficiary.fullName || '',
         nationalId: beneficiary.nationalId || '',
@@ -88,46 +85,10 @@ export default function BeneficiaryForm({ beneficiary, onSave, onCancel, onUnsav
         economicLevel: beneficiary.economicLevel || 'poor',
         membersCount: beneficiary.membersCount || 1,
         notes: beneficiary.notes || ''
-      };
-      setFormData(initialData);
-      setInitialFormData(initialData);
-    } else {
-      const emptyData = {
-        name: '',
-        fullName: '',
-        nationalId: '',
-        dateOfBirth: '',
-        gender: 'male' as const,
-        phone: '',
-        address: '',
-        detailedAddress: {
-          governorate: '',
-          city: '',
-          district: '',
-          street: '',
-          additionalInfo: ''
-        },
-        profession: '',
-        maritalStatus: 'single' as const,
-        economicLevel: 'poor' as const,
-        membersCount: 1,
-        notes: ''
-      };
-      setFormData(emptyData);
-      setInitialFormData(emptyData);
+      });
     }
   }, [beneficiary]);
 
-  // تتبع التغييرات في النموذج
-  useEffect(() => {
-    if (initialFormData) {
-      const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
-      setHasUnsavedChanges(hasChanges);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(hasChanges);
-      }
-    }
-  }, [formData, initialFormData, onUnsavedChanges]);
   const governorates = ['غزة', 'خان يونس', 'الوسطى', 'شمال غزة', 'رفح'];
   const maritalStatusOptions = [
     { value: 'single', label: 'أعزب' },
@@ -268,10 +229,6 @@ export default function BeneficiaryForm({ beneficiary, onSave, onCancel, onUnsav
         logInfo(`محاكاة إضافة مستفيد جديد: ${formData.name}`, 'BeneficiaryForm');
       }
 
-      setHasUnsavedChanges(false);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(false);
-      }
       onSave();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
@@ -282,13 +239,6 @@ export default function BeneficiaryForm({ beneficiary, onSave, onCancel, onUnsav
     }
   };
 
-  const handleCancel = () => {
-    setHasUnsavedChanges(false);
-    if (onUnsavedChanges) {
-      onUnsavedChanges(false);
-    }
-    onCancel();
-  };
   const loading = isSubmitting;
   const error = operationError;
 
@@ -549,7 +499,7 @@ export default function BeneficiaryForm({ beneficiary, onSave, onCancel, onUnsav
               variant="secondary"
               icon={X}
               iconPosition="right"
-              onClick={handleCancel}
+              onClick={onCancel}
               disabled={loading}
             >
               إلغاء

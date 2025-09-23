@@ -9,7 +9,6 @@ interface PackageTemplateFormProps {
   onSave: (data: Partial<PackageTemplate>) => void;
   onCancel: () => void;
   isCopy?: boolean;
-  onUnsavedChanges?: (hasChanges: boolean) => void;
 }
 
 interface FormData {
@@ -22,7 +21,7 @@ interface FormData {
   totalWeight: number;
 }
 
-export default function PackageTemplateForm({ template, onSave, onCancel, isCopy = false, onUnsavedChanges }: PackageTemplateFormProps) {
+export default function PackageTemplateForm({ template, onSave, onCancel, isCopy = false }: PackageTemplateFormProps) {
   const { logError, logInfo } = useErrorLogger();
 
   const [formData, setFormData] = useState<FormData>({
@@ -38,14 +37,12 @@ export default function PackageTemplateForm({ template, onSave, onCancel, isCopy
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
-  const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const isEditing = !!template && !isCopy;
 
   useEffect(() => {
     if (template && (isEditing || isCopy)) {
-      const initialData = {
+      setFormData({
         name: isCopy ? `${template.name} (نسخة)` : template.name || '',
         type: template.type || '',
         organization_id: template.organization_id || '',
@@ -53,34 +50,10 @@ export default function PackageTemplateForm({ template, onSave, onCancel, isCopy
         contents: template.contents || [],
         estimatedCost: template.estimatedCost || 0,
         totalWeight: template.totalWeight || 0,
-      };
-      setFormData(initialData);
-      setInitialFormData(initialData);
-    } else {
-      const emptyData = {
-        name: '',
-        type: '' as FormData['type'],
-        organization_id: '',
-        description: '',
-        contents: [],
-        estimatedCost: 0,
-        totalWeight: 0,
-      };
-      setFormData(emptyData);
-      setInitialFormData(emptyData);
+      });
     }
   }, [template, isEditing, isCopy]);
 
-  // تتبع التغييرات في النموذج
-  useEffect(() => {
-    if (initialFormData) {
-      const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
-      setHasUnsavedChanges(hasChanges);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(hasChanges);
-      }
-    }
-  }, [formData, initialFormData, onUnsavedChanges]);
   const organizationOptions = mockOrganizations.map(org => ({
     value: org.id,
     label: org.name,
@@ -187,11 +160,6 @@ export default function PackageTemplateForm({ template, onSave, onCancel, isCopy
 
       onSave(formData);
       logInfo(`تم محاكاة حفظ قالب الطرد: ${formData.name}`, 'PackageTemplateForm');
-      
-      setHasUnsavedChanges(false);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(false);
-      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
       setOperationError(errorMessage);
@@ -201,13 +169,6 @@ export default function PackageTemplateForm({ template, onSave, onCancel, isCopy
     }
   };
 
-  const handleCancel = () => {
-    setHasUnsavedChanges(false);
-    if (onUnsavedChanges) {
-      onUnsavedChanges(false);
-    }
-    onCancel();
-  };
   const loading = isSubmitting;
 
   return (
@@ -419,7 +380,7 @@ export default function PackageTemplateForm({ template, onSave, onCancel, isCopy
               variant="secondary"
               icon={X}
               iconPosition="right"
-              onClick={handleCancel}
+              onClick={onCancel}
               disabled={loading}
             >
               إلغاء
