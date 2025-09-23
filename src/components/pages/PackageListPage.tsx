@@ -21,8 +21,6 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
   // Add missing state variables
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [templatesError, setTemplatesError] = useState<Error | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // استخدام البيانات الوهمية مباشرة
   // For simplicity, we'll use a mutable copy of mock data for local changes
@@ -210,24 +208,6 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
     alert('تم تصدير قوالب الطرود بنجاح');
   };
 
-  const handleAttemptCloseModal = () => {
-    if (hasUnsavedChanges && (modalType === 'add' || modalType === 'edit' || modalType === 'copy')) {
-      setShowConfirmModal(true);
-    } else {
-      handleCloseModal();
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedTemplate(null);
-    setHasUnsavedChanges(false);
-  };
-
-  const handleConfirmCloseModal = () => {
-    setShowConfirmModal(false);
-    handleCloseModal();
-  };
   return (
     <div className="space-y-6">
       {/* Data Source Indicator */}
@@ -504,18 +484,22 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
 
       {/* Modal for Add/Edit/View/Copy */}
       {showModal && (
-        <Modal
-          isOpen={showModal}
-          onClose={handleCloseModal}
-          onAttemptClose={handleAttemptCloseModal}
-          title={
-            modalType === 'add' ? 'إضافة قالب طرد جديد' :
-            modalType === 'edit' ? 'تعديل قالب الطرد' :
-            modalType === 'copy' ? 'نسخ قالب الطرد' :
-            'عرض تفاصيل القالب'
-          }
-          size="xl"
-        >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir="rtl">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[95vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                {modalType === 'add' ? 'إضافة قالب طرد جديد' :
+                 modalType === 'edit' ? 'تعديل قالب الطرد' :
+                 modalType === 'copy' ? 'نسخ قالب الطرد' :
+                 'عرض تفاصيل القالب'}
+              </h3>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
             
             {(modalType === 'add' || modalType === 'edit' || modalType === 'copy') && (
               <PackageTemplateForm
@@ -529,14 +513,17 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                       await updateTemplate(selectedTemplate.id, data);
                       logInfo(`تم تحديث القالب بنجاح: ${data.name}`, 'PackageListPage');
                     }
-                    handleCloseModal();
+                    setShowModal(false);
+                    setSelectedTemplate(null);
                   } catch (error) {
                     logError(error as Error, 'PackageListPage');
                   }
                 }}
-                onCancel={handleCloseModal}
+                onCancel={() => {
+                  setShowModal(false);
+                  setSelectedTemplate(null);
+                }}
                 isCopy={modalType === 'copy'}
-                onUnsavedChanges={setHasUnsavedChanges}
               />
             )}
 
@@ -659,21 +646,10 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                 </div>
               </div>
             )}
-        </Modal>
+          </div>
+        </div>
       )}
 
-      {/* Confirmation Modal for Unsaved Changes */}
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmCloseModal}
-        title="تجاهل التغييرات؟"
-        message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
-        confirmButtonText="تجاهل التغييرات"
-        cancelButtonText="البقاء في النموذج"
-        type="warning"
-        confirmButtonVariant="warning"
-      />
       {/* Empty State for No Data */}
       {templates.length === 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-12">

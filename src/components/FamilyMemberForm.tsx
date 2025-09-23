@@ -9,7 +9,6 @@ interface FamilyMemberFormProps {
   member?: Beneficiary | null;
   onSave: (memberData: Partial<Beneficiary>) => void;
   onCancel: () => void;
-  onUnsavedChanges?: (hasChanges: boolean) => void;
 }
 
 interface FormData {
@@ -27,7 +26,7 @@ interface FormData {
   notes: string;
 }
 
-export default function FamilyMemberForm({ familyId, member, onSave, onCancel, onUnsavedChanges }: FamilyMemberFormProps) {
+export default function FamilyMemberForm({ familyId, member, onSave, onCancel }: FamilyMemberFormProps) {
   const { logError, logInfo } = useErrorLogger();
   
   const [formData, setFormData] = useState<FormData>({
@@ -48,15 +47,13 @@ export default function FamilyMemberForm({ familyId, member, onSave, onCancel, o
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
-  const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const isEditing = !!member;
   const family = mockFamilies.find(f => f.id === familyId);
 
   useEffect(() => {
     if (member) {
-      const initialData = {
+      setFormData({
         name: member.name || '',
         fullName: member.fullName || '',
         nationalId: member.nationalId || '',
@@ -69,39 +66,10 @@ export default function FamilyMemberForm({ familyId, member, onSave, onCancel, o
         economicLevel: member.economicLevel || 'poor',
         membersCount: member.membersCount || 1,
         notes: member.notes || ''
-      };
-      setFormData(initialData);
-      setInitialFormData(initialData);
-    } else {
-      const emptyData = {
-        name: '',
-        fullName: '',
-        nationalId: '',
-        dateOfBirth: '',
-        gender: 'male' as const,
-        phone: '',
-        relationToFamily: '',
-        profession: '',
-        maritalStatus: 'single' as const,
-        economicLevel: 'poor' as const,
-        membersCount: 1,
-        notes: ''
-      };
-      setFormData(emptyData);
-      setInitialFormData(emptyData);
+      });
     }
   }, [member]);
 
-  // تتبع التغييرات في النموذج
-  useEffect(() => {
-    if (initialFormData) {
-      const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
-      setHasUnsavedChanges(hasChanges);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(hasChanges);
-      }
-    }
-  }, [formData, initialFormData, onUnsavedChanges]);
   const relationshipOptions = [
     { value: 'رب الأسرة', label: 'رب الأسرة' },
     { value: 'الزوجة', label: 'الزوجة' },
@@ -243,10 +211,6 @@ export default function FamilyMemberForm({ familyId, member, onSave, onCancel, o
         logInfo(`محاكاة إضافة فرد جديد للعائلة: ${formData.name}`, 'FamilyMemberForm');
       }
     } catch (error) {
-      setHasUnsavedChanges(false);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(false);
-      }
       const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
       setOperationError(errorMessage);
       logError(new Error(errorMessage), 'FamilyMemberForm');
@@ -255,13 +219,6 @@ export default function FamilyMemberForm({ familyId, member, onSave, onCancel, o
     }
   };
 
-  const handleCancel = () => {
-    setHasUnsavedChanges(false);
-    if (onUnsavedChanges) {
-      onUnsavedChanges(false);
-    }
-    onCancel();
-  };
   const loading = isSubmitting;
 
   return (
@@ -505,7 +462,7 @@ export default function FamilyMemberForm({ familyId, member, onSave, onCancel, o
               variant="secondary"
               icon={X}
               iconPosition="right"
-              onClick={handleCancel}
+              onClick={onCancel}
               disabled={loading}
             >
               إلغاء

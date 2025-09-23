@@ -8,7 +8,6 @@ interface OrganizationFormProps {
   organization?: Organization | null;
   onSave: (data: Partial<Organization>) => void;
   onCancel: () => void;
-  onUnsavedChanges?: (hasChanges: boolean) => void;
 }
 
 interface FormData {
@@ -21,7 +20,7 @@ interface FormData {
   status: 'active' | 'pending' | 'suspended';
 }
 
-export default function OrganizationForm({ organization, onSave, onCancel, onUnsavedChanges }: OrganizationFormProps) {
+export default function OrganizationForm({ organization, onSave, onCancel }: OrganizationFormProps) {
   const { logError, logInfo } = useErrorLogger();
 
   const [formData, setFormData] = useState<FormData>({
@@ -37,14 +36,12 @@ export default function OrganizationForm({ organization, onSave, onCancel, onUns
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
-  const [initialFormData, setInitialFormData] = useState<FormData | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const isEditing = !!organization;
 
   useEffect(() => {
     if (organization) {
-      const initialData = {
+      setFormData({
         name: organization.name || '',
         type: organization.type || '',
         location: organization.location || '',
@@ -52,34 +49,10 @@ export default function OrganizationForm({ organization, onSave, onCancel, onUns
         phone: organization.phone || '',
         email: organization.email || '',
         status: organization.status || 'pending',
-      };
-      setFormData(initialData);
-      setInitialFormData(initialData);
-    } else {
-      const emptyData = {
-        name: '',
-        type: '',
-        location: '',
-        contactPerson: '',
-        phone: '',
-        email: '',
-        status: 'pending' as const,
-      };
-      setFormData(emptyData);
-      setInitialFormData(emptyData);
+      });
     }
   }, [organization]);
 
-  // تتبع التغييرات في النموذج
-  useEffect(() => {
-    if (initialFormData) {
-      const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
-      setHasUnsavedChanges(hasChanges);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(hasChanges);
-      }
-    }
-  }, [formData, initialFormData, onUnsavedChanges]);
   const organizationTypes = [
     'منظمة دولية', 'منظمة محلية', 'جمعية خيرية', 'مبادرة فردية', 'أخرى'
   ];
@@ -160,11 +133,6 @@ export default function OrganizationForm({ organization, onSave, onCancel, onUns
 
       onSave(dataToSave);
       logInfo('تم محاكاة حفظ بيانات المؤسسة: ' + formData.name, 'OrganizationForm');
-      
-      setHasUnsavedChanges(false);
-      if (onUnsavedChanges) {
-        onUnsavedChanges(false);
-      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'خطأ غير معروف';
       setOperationError(errorMessage);
@@ -174,13 +142,6 @@ export default function OrganizationForm({ organization, onSave, onCancel, onUns
     }
   };
 
-  const handleCancel = () => {
-    setHasUnsavedChanges(false);
-    if (onUnsavedChanges) {
-      onUnsavedChanges(false);
-    }
-    onCancel();
-  };
   const loading = isSubmitting;
 
   return (
@@ -324,7 +285,7 @@ export default function OrganizationForm({ organization, onSave, onCancel, onUns
               variant="secondary"
               icon={X}
               iconPosition="right"
-              onClick={handleCancel}
+              onClick={onCancel}
               disabled={loading}
             >
               إلغاء

@@ -28,8 +28,6 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view'>('add');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalContent, setModalContent] = useState<string>('');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const families: Family[] = mockFamilies;
 
@@ -72,18 +70,6 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
     setShowModal(true);
   };
 
-  const handleAttemptClose = () => {
-    if (hasUnsavedChanges) {
-      setShowConfirmModal(true);
-    } else {
-      handleCancelMember();
-    }
-  };
-
-  const handleConfirmClose = () => {
-    setShowConfirmModal(false);
-    handleCancelMember();
-  };
   const handleSaveMember = (memberData: Partial<Beneficiary>) => {
     if (modalType === 'add') {
       // محاكاة إضافة فرد جديد للعائلة
@@ -145,14 +131,12 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
     setShowModal(false);
     setSelectedItem(null);
     setModalContent('');
-    setHasUnsavedChanges(false);
   };
 
   const handleCancelMember = () => {
     setShowModal(false);
     setSelectedItem(null);
     setModalContent('');
-    setHasUnsavedChanges(false);
   };
 
   const handleUpdateData = () => {
@@ -186,7 +170,6 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
   );
 
   return (
-    <>
     <div className="min-h-screen bg-gray-50/30 flex" dir="rtl">
       {/* Sidebar */}
       <div className="w-64 bg-white border-l border-gray-200 flex flex-col">
@@ -691,8 +674,7 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
       {showModal && (
         <Modal
           isOpen={showModal}
-          onClose={handleCancelMember}
-          onAttemptClose={handleAttemptClose}
+          onClose={() => setShowModal(false)}
           title={
             modalType === 'add' && modalContent === 'member' ? 'إضافة فرد جديد للعائلة' :
             modalType === 'edit' && modalContent === 'member' ? 'تعديل بيانات فرد العائلة' :
@@ -709,7 +691,6 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
               member={modalType === 'edit' ? selectedItem : null}
               onSave={handleSaveMember}
               onCancel={handleCancelMember}
-              onUnsavedChanges={setHasUnsavedChanges}
             />
           )}
 
@@ -816,30 +797,5 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
         </Modal>
       )}
     </div>
-      {/* Confirmation Modal for Unsaved Changes */}
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmClose}
-        title="تجاهل التغييرات؟"
-        message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
-        confirmButtonText="تجاهل التغييرات"
-        cancelButtonText="البقاء في النموذج"
-        type="warning"
-        confirmButtonVariant="warning"
-      />
-    {/* Confirmation Modal for Unsaved Changes */}
-    <ConfirmationModal
-      isOpen={showConfirmModal}
-      onClose={() => setShowConfirmModal(false)}
-      onConfirm={handleConfirmClose}
-      title="تجاهل التغييرات؟"
-      message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
-      confirmButtonText="تجاهل التغييرات"
-      cancelButtonText="البقاء في النموذج"
-      type="warning"
-      confirmButtonVariant="warning"
-    />
-    </>
   );
 }
