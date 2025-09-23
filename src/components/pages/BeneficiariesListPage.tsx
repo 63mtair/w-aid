@@ -333,13 +333,7 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
   };
 
   const handleExportBeneficiaries = () => {
-    if (selectedBeneficiaries.length > 0) {
-      // Export only selected beneficiaries
-      handleBulkExport();
-    } else {
-      // Export all filtered beneficiaries
-      setShowExportModal(true);
-    }
+    setShowExportModal(true);
   };
 
   const getStatusColor = (status: string) => {

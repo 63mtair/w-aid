@@ -120,25 +120,7 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
   };
 
   const handleExportReport = () => {
-    const reportData = {
-      date: new Date().toISOString(),
-      totalOrganizations,
-      activeOrganizations,
-      pendingOrganizations,
-      totalBeneficiaries,
-      organizations: filteredOrganizations
-    };
-    
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `تقرير_المؤسسات_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    alert('تم تصدير تقرير المؤسسات بنجاح');
+    setShowExportModal(true);
   };
 
   return (
