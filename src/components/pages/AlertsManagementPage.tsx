@@ -18,8 +18,6 @@ export default function AlertsManagementPage() {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
-  const [exportFormat, setExportFormat] = useState<'json' | 'excel'>('json');
-  const [showExportModal, setShowExportModal] = useState(false);
 
   // Form state for adding new alerts
   const [newAlertForm, setNewAlertForm] = useState({
@@ -232,6 +230,10 @@ export default function AlertsManagementPage() {
   };
 
   const handleExportAlerts = () => {
+    setShowExportModal(true);
+  };
+
+  const executeExport = () => {
     const exportData = {
       date: new Date().toISOString(),
       totalAlerts: alerts.length,
@@ -249,17 +251,50 @@ export default function AlertsManagementPage() {
       }))
     };
     
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `تقرير_التنبيهات_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const fileName = `تقرير_التنبيهات_${new Date().toISOString().split('T')[0]}`;
     
-    setNotification({ message: 'تم تصدير تقرير التنبيهات بنجاح', type: 'success' });
+    if (exportFormat === 'json') {
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } else if (exportFormat === 'excel') {
+      // إنشاء CSV للاستخدام مع Excel
+      const headers = ['التاريخ', 'النوع', 'العنوان', 'الوصف', 'الأولوية', 'الحالة', 'مرتبط بـ'];
+      let csvContent = headers.join(',') + '\n';
+      
+      exportData.alerts.forEach(alert => {
+        const row = [
+          `"${new Date(alert.createdAt).toLocaleDateString('ar-SA')}"`,
+          `"${alert.type}"`,
+          `"${alert.title}"`,
+          `"${alert.description.replace(/"/g, '""')}"`,
+          `"${alert.priority}"`,
+          `"${alert.isRead}"`,
+          `"${alert.relatedInfo}"`
+        ];
+        csvContent += row.join(',') + '\n';
+      });
+      
+      const dataBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    setNotification({ 
+      message: `تم تصدير تقرير التنبيهات بصيغة ${exportFormat.toUpperCase()} بنجاح`, 
+      type: 'success' 
+    });
     setTimeout(() => setNotification(null), 3000);
+    setShowExportModal(false);
   };
 
   return (
@@ -915,6 +950,87 @@ export default function AlertsManagementPage() {
                 </div>
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <Modal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          title="تصدير تقرير التنبيهات"
+          size="md"
+        >
+          <div className="p-6 space-y-6">
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+              <h4 className="font-medium text-blue-800 mb-3">معلومات التصدير</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700">إجمالي التنبيهات:</span>
+                  <span className="font-medium text-blue-900 mr-2">{alerts.length}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">المفلترة للتصدير:</span>
+                  <span className="font-medium text-blue-900 mr-2">{filteredAlerts.length}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">غير مقروءة:</span>
+                  <span className="font-medium text-orange-600 mr-2">{statistics.unread}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">حرجة:</span>
+                  <span className="font-medium text-red-600 mr-2">{statistics.critical}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-4">اختر تنسيق التصدير</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div
+                  onClick={() => setExportFormat('json')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'json'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <h5 className="font-medium text-gray-900">JSON</h5>
+                    <p className="text-sm text-gray-600">ملف JSON مع جميع التفاصيل والإحصائيات</p>
+                  </div>
+                <div
+                  onClick={() => setExportFormat('excel')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'excel'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <h5 className="font-medium text-gray-900">Excel (CSV)</h5>
+                    <p className="text-sm text-gray-600">ملف CSV لفتحه في Excel</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+                </div>
+            <div className="flex space-x-3 space-x-reverse justify-end pt-4">
+              <Button variant="secondary" onClick={() => setShowExportModal(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                variant="primary" 
+                icon={Download} 
+                iconPosition="right"
+                onClick={executeExport}
+              >
+                تصدير ({filteredAlerts.length} تنبيه)
+              </Button>
+            </div>
           </div>
         </Modal>
       )}
