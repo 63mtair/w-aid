@@ -256,6 +256,21 @@ export default function MessagesSettingsPage() {
     return matchesSearch;
   });
 
+  // Mock data for filtered messages
+  const filteredMessages = messageLogs.filter(log => {
+    const matchesSearch = log.templateName.toLowerCase().includes(messagesSearchTerm.toLowerCase()) ||
+                         log.recipientName.toLowerCase().includes(messagesSearchTerm.toLowerCase()) ||
+                         log.recipient.includes(messagesSearchTerm);
+    const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
+    const matchesType = typeFilter === 'all' || log.type === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  // Pagination calculations
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedMessages = filteredMessages.slice(startIndex, endIndex);
+
   // إحصائيات
   const statistics = {
     totalTemplates: messageTemplates.length,
@@ -844,22 +859,151 @@ export default function MessagesSettingsPage() {
             </div>
           </div>
 
-          {/* Search */}
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="bg-blue-50">
+              <div className="text-center">
+                <div className="bg-blue-100 p-3 rounded-xl mb-2">
+                  <Send className="w-6 h-6 text-blue-600 mx-auto" />
+                </div>
+                <p className="text-sm text-blue-600">إجمالي الرسائل</p>
+                <p className="text-2xl font-bold text-blue-900">{filteredMessages.length.toLocaleString()}</p>
+              </div>
+            </Card>
+
+            <Card className="bg-green-50">
+              <div className="text-center">
+                <div className="bg-green-100 p-3 rounded-xl mb-2">
+                  <CheckCircle className="w-6 h-6 text-green-600 mx-auto" />
+                </div>
+                <p className="text-sm text-green-600">تم التسليم</p>
+                <p className="text-2xl font-bold text-green-900">{filteredMessages.filter(m => m.status === 'delivered').length.toLocaleString()}</p>
+              </div>
+            </Card>
+
+            <Card className="bg-orange-50">
+              <div className="text-center">
+                <div className="bg-orange-100 p-3 rounded-xl mb-2">
+                  <Clock className="w-6 h-6 text-orange-600 mx-auto" />
+                </div>
+                <p className="text-sm text-orange-600">في الانتظار</p>
+                <p className="text-2xl font-bold text-orange-900">{filteredMessages.filter(m => m.status === 'pending').length.toLocaleString()}</p>
+              </div>
+            </Card>
+
+            <Card className="bg-red-50">
+              <div className="text-center">
+                <div className="bg-red-100 p-3 rounded-xl mb-2">
+                  <AlertTriangle className="w-6 h-6 text-red-600 mx-auto" />
+                </div>
+                <p className="text-sm text-red-600">فشل الإرسال</p>
+                <p className="text-2xl font-bold text-red-900">{filteredMessages.filter(m => m.status === 'failed').length.toLocaleString()}</p>
+              </div>
+            </Card>
+          </div>
+
+          {/* Search and Filters */}
           <Card>
-            <Input
-              type="text"
-              icon={Search}
-              iconPosition="right"
-              placeholder="البحث في سجل الرسائل..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className="grid md:grid-cols-5 gap-4">
+              <div className="md:col-span-2">
+                <Input
+                  type="text"
+                  icon={Search}
+                  iconPosition="right"
+                  placeholder="البحث في الرسائل (المستلم، المحتوى، الهاتف)..."
+                  value={messagesSearchTerm}
+                  onChange={(e) => setMessagesSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">جميع الحالات</option>
+                  <option value="sent">تم الإرسال</option>
+                  <option value="delivered">تم التسليم</option>
+                  <option value="failed">فشل</option>
+                  <option value="pending">في الانتظار</option>
+                </select>
+              </div>
+
+              <div>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">جميع الأنواع</option>
+                  <option value="notification">إشعار</option>
+                  <option value="reminder">تذكير</option>
+                  <option value="alert">تنبيه</option>
+                  <option value="confirmation">تأكيد</option>
+                </select>
+              </div>
+
+              <div>
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">جميع التواريخ</option>
+                  <option value="today">اليوم</option>
+                  <option value="week">هذا الأسبوع</option>
+                  <option value="month">هذا الشهر</option>
+                </select>
+              </div>
+            </div>
+            
+            {/* Results Summary */}
+            <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+              <span>عرض {startIndex + 1}-{Math.min(endIndex, filteredMessages.length)} من {filteredMessages.length} رسالة</span>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <span>عدد الرسائل في الصفحة:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-2 py-1 border border-gray-300 rounded text-sm"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                </select>
+              </div>
+            </div>
           </Card>
+
+          {/* Performance Notice for Large Datasets */}
+          {filteredMessages.length > 10000 && (
+            <Card className="bg-orange-50 border-orange-200" padding="sm">
+              <div className="flex items-center space-x-2 space-x-reverse text-orange-600">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  تحذير: يوجد {filteredMessages.length.toLocaleString()} رسالة - قد يؤثر على الأداء. استخدم الفلاتر لتقليل النتائج.
+                </span>
+              </div>
+            </Card>
+          )}
 
           {/* Logs Table */}
           <Card padding="none" className="overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900">سجل الرسائل ({filteredLogs.length})</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  سجل الرسائل ({filteredMessages.length.toLocaleString()} رسالة)
+                </h3>
+                <div className="flex items-center space-x-2 space-x-reverse text-blue-600">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">البيانات الوهمية</span>
+                </div>
+              </div>
             </div>
             
             <div className="overflow-x-auto">
@@ -867,19 +1011,19 @@ export default function MessagesSettingsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      المستلم
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       القالب
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       النوع
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      المستلم
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       الحالة
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      تاريخ الإرسال
+                      التاريخ
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       الإجراءات
@@ -887,49 +1031,62 @@ export default function MessagesSettingsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredLogs.length > 0 ? (
-                    filteredLogs.map((log) => {
-                      const TypeIcon = getTypeIcon(log.type);
+                  {paginatedMessages.length > 0 ? (
+                    paginatedMessages.map((message, index) => {
+                      const TypeIcon = getTypeIcon(message.type);
                       return (
-                        <tr key={log.id} className="hover:bg-gray-50">
+                        <tr key={message.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{log.templateName}</div>
-                              <div className="text-sm text-gray-500">#{log.id}</div>
+                            <div className="flex items-center">
+                              <div className="bg-gray-100 text-gray-600 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ml-3">
+                                {startIndex + index + 1}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{message.recipientName}</div>
+                                <div className="text-sm text-gray-500">{message.recipient}</div>
+                              </div>
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{message.templateName}</div>
+                            <div className="text-sm text-gray-500">#{message.id}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center space-x-2 space-x-reverse">
                               <TypeIcon className="w-4 h-4" />
                               <Badge variant="info" size="sm">
-                                {messageTypes.find(t => t.value === log.type)?.label || log.type}
+                                {messageTypes.find(t => t.value === message.type)?.label || message.type}
                               </Badge>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{log.recipientName}</div>
-                              <div className="text-sm text-gray-500">{log.recipient}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
                             <Badge variant={
-                              log.status === 'delivered' ? 'success' :
-                              log.status === 'failed' ? 'error' :
-                              log.status === 'sent' ? 'info' : 'warning'
+                              message.status === 'delivered' ? 'success' :
+                              message.status === 'failed' ? 'error' :
+                              message.status === 'sent' ? 'info' : 'warning'
                             } size="sm">
-                              {getStatusText(log.status)}
+                              {getStatusText(message.status)}
                             </Badge>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {new Date(log.sentAt).toLocaleDateString('en-CA')}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="font-medium">
+                                {new Date(message.sentAt).toLocaleDateString('en-US')}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {new Date(message.sentAt).toLocaleTimeString('en-US', { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <Button 
                               variant="secondary" 
                               size="sm"
                               onClick={() => {
-                                setSelectedItem(log);
+                                setSelectedItem(message);
                                 setModalType('view-log');
                                 setShowModal(true);
                               }}
@@ -945,8 +1102,16 @@ export default function MessagesSettingsPage() {
                       <td colSpan={6} className="px-6 py-12 text-center">
                         <div className="text-gray-500">
                           <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p className="text-lg font-medium">لا توجد رسائل في السجل</p>
-                          <p className="text-sm mt-2">لم يتم إرسال أي رسائل بعد</p>
+                          <p className="text-lg font-medium">
+                            {messagesSearchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFilter !== 'all' 
+                              ? 'لا توجد رسائل مطابقة للفلاتر' 
+                              : 'لا توجد رسائل'}
+                          </p>
+                          <p className="text-sm mt-2">
+                            {messagesSearchTerm || statusFilter !== 'all' || typeFilter !== 'all' || dateFilter !== 'all'
+                              ? 'جرب تعديل الفلاتر أو مصطلح البحث'
+                              : 'لم يتم إرسال أي رسائل بعد'}
+                          </p>
                         </div>
                       </td>
                     </tr>
