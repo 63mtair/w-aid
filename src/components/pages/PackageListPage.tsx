@@ -85,7 +85,6 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
   const totalTemplates = templates.length;
   const activeTemplates = templates.filter(t => t.status === 'active').length; // Fix: usage_count is not status
   const draftTemplates = templates.filter(t => t.status === 'draft').length;
-  const totalUsage = templates.reduce((sum, t) => sum + t.usageCount, 0);
 
   const handleAddNew = () => {
     setModalType('add');
