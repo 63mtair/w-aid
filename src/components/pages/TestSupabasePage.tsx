@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Database, CheckCircle, AlertTriangle, RefreshCw, Users, Package, Building2, Heart, Shield, Activity, Eye, Edit, Phone } from 'lucide-react';
+import { Database, CheckCircle, AlertTriangle, RefreshCw, Users, Package, Building2, Heart, Shield, Activity, Eye, Edit, Phone, Bell } from 'lucide-react';
 import { statisticsService } from '../../services/supabaseService';
 import { mockBeneficiaries, mockOrganizations, mockFamilies, mockPackages, mockTasks, mockAlerts, mockRoles, mockSystemUsers, calculateStats } from '../../data/mockData';
 import SupabaseConnectionStatus from '../SupabaseConnectionStatus';
