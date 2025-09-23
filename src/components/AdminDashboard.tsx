@@ -266,6 +266,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       'distribution-reports': 'تقارير مفصلة عن عمليات التوزيع ومتابعة دفعات التوزيع',
       'organizations': 'إدارة المؤسسات الخيرية والإنسانية',
       'families': 'إدارة العائلات والمبادرين الفرديين',
+      'couriers': 'إدارة المندوبين ومتابعة أدائهم وتتبع مواقعهم',
       'couriers': 'إدارة المندوبين ومتابعة أدائهم',
       'tasks': 'إدارة مهام التوزيع والمتابعة',
       'reports': 'تقارير شاملة وإحصائيات مفصلة',
@@ -275,6 +276,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       'system': 'الإعدادات العامة للنظام',
       'backup': 'إدارة النسخ الاحتياطية للبيانات',
       'audit': 'سجل جميع العمليات في النظام',
+      'bulk-tasks-test': 'نسخة محسنة من صفحة المهام الجماعية للاختبار والمقارنة',
       'test-supabase': 'اختبار الاتصال وجلب البيانات من قاعدة البيانات'
     };
     return descriptions[tabId] || '';
