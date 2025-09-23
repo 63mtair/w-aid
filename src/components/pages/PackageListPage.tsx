@@ -375,7 +375,7 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{template.description}</p>
 
                   {/* Template Stats */}
-                  <div className="grid grid-cols-2 gap-4 text-center"> {/* Fix: usage_count is not status */}
+                  <div className="grid grid-cols-3 gap-4 text-center"> {/* Fix: usage_count is not status */}
                     <div>
                       <p className="text-lg font-bold text-blue-600">{template.items?.length || template.contents.length}</p>
                       <p className="text-xs text-gray-600">عناصر</p>
@@ -383,6 +383,10 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                     <div>
                       <p className="text-lg font-bold text-green-600">{template.totalWeight?.toFixed(1) || 0}</p>
                       <p className="text-xs text-gray-600">كيلو</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-purple-600">{template.estimatedCost}</p>
+                      <p className="text-xs text-gray-600">شيكل</p>
                     </div>
                   </div>
                 </div>
@@ -571,14 +575,14 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                           <span className="font-medium text-gray-900">{selectedTemplate.totalWeight?.toFixed(1) || 0} كيلو</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">التكلفة المتوقعة:</span>
-                          <span className="font-medium text-green-600">{selectedTemplate.estimatedCost} ₪</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span className="text-gray-600">تاريخ الإنشاء:</span>
                           <span className="font-medium text-gray-900">
                             {new Date(selectedTemplate.createdAt).toLocaleDateString('ar-SA')}
                           </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">معرف القالب:</span>
+                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-900">{selectedTemplate.id}</span>
                         </div>
                       </div>
                     </div>

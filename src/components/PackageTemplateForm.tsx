@@ -118,9 +118,6 @@ export default function PackageTemplateForm({ template, onSave, onCancel, isCopy
     if (!formData.organization_id) {
       newErrors.organization_id = 'المؤسسة المانحة مطلوبة';
     }
-    if (formData.estimatedCost <= 0) {
-      newErrors.estimatedCost = 'التكلفة المقدرة يجب أن تكون أكبر من صفر';
-    }
     if (formData.contents.length === 0) {
       newErrors.contents = 'يجب إضافة عناصر إلى محتويات الطرد';
     } else {

@@ -335,6 +335,23 @@ const batch4Id = uuidv4();
 // Mock Data
 export const mockOrganizations: Organization[] = [
   {
+    id: 'org-wafra',
+    name: 'وفرة',
+    type: 'منظمة دولية',
+    location: 'غزة - الرمال',
+    contactPerson: 'إدارة وفرة',
+    phone: '0599000000',
+    email: 'info@wafra.org',
+    beneficiariesCount: 0,
+    packagesCount: 0,
+    completionRate: 100,
+    status: 'active',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    packagesAvailable: 0,
+    templatesCount: 0,
+    isPopular: true
+  },
+  {
     id: org1Id,
     name: 'جمعية الهلال الأحمر الفلسطيني - غزة',
     type: 'طعام - ملابس',
