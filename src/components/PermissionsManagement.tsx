@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Users, UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Settings, Lock, Unlock, Crown, UserPlus, CheckCircle, XCircle, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Shield, Users, UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Settings, Lock, Unlock, Crown, UserPlus, CheckCircle, XCircle, AlertTriangle, ArrowRight, X } from 'lucide-react';
 import { 
   mockRoles as initialMockRoles, 
   mockSystemUsers as initialMockSystemUsers, 
@@ -400,18 +400,6 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
       default:
         return { title: '', message: '', confirmText: '', variant: 'primary' as const };
     }
-  };
-    setSystemUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId
-          ? { 
-              ...user, 
-              status: user.status === 'active' ? 'inactive' : 'active' 
-            }
-          : user
-      )
-    );
-    alert('تم تحديث حالة المستخدم بنجاح');
   };
 
   const handleEditUserPermissions = (user: SystemUser) => {

@@ -440,6 +440,103 @@ export default function TrackingPage({ onNavigateToIndividualSend }: TrackingPag
           }}
         />
       )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <Modal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          title="تصدير تقرير الخريطة"
+          size="md"
+        >
+          <div className="p-6 space-y-6">
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+              <h4 className="font-medium text-blue-800 mb-3">معلومات التصدير</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700">النقاط المعروضة:</span>
+                  <span className="font-medium text-blue-900 mr-2">{filteredMapPoints.length}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">تم التوصيل:</span>
+                  <span className="font-medium text-green-600 mr-2">{deliveredCount}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">قيد التحضير:</span>
+                  <span className="font-medium text-blue-600 mr-2">{inPreparationCount}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">في الطريق:</span>
+                  <span className="font-medium text-orange-600 mr-2">{inTransitCount}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-4">اختر تنسيق التصدير</h4>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div
+                  onClick={() => setExportFormat('json')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'json'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <h5 className="font-medium text-gray-900">JSON</h5>
+                    <p className="text-sm text-gray-600">ملف JSON مع الإحصائيات والفلاتر</p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setExportFormat('csv')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'csv'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <h5 className="font-medium text-gray-900">CSV</h5>
+                    <p className="text-sm text-gray-600">ملف CSV لفتحه في Excel</p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setExportFormat('excel')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'excel'
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                    <h5 className="font-medium text-gray-900">Excel</h5>
+                    <p className="text-sm text-gray-600">ملف Excel متقدم</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex space-x-3 space-x-reverse justify-end pt-4">
+              <Button variant="secondary" onClick={() => setShowExportModal(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                variant="primary" 
+                icon={Download} 
+                iconPosition="right"
+                onClick={executeExport}
+              >
+                تصدير ({filteredMapPoints.length} نقطة)
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

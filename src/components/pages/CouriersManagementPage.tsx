@@ -19,6 +19,8 @@ export default function CouriersManagementPage() {
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view' | 'track'>('add');
   const [selectedCourier, setSelectedCourier] = useState<Courier | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'excel'>('json');
   const { logInfo, logError } = useErrorLogger();
 
   // استخدام البيانات الوهمية مباشرة

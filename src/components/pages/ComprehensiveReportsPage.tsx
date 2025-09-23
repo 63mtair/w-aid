@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { BarChart3, Download, Calendar, Filter, TrendingUp, Users, Package, CheckCircle, Clock, AlertTriangle, Star, Award, MapPin, Activity, PieChart, LineChart, Truck } from 'lucide-react';
+import { BarChart3, Download, Calendar, Filter, TrendingUp, Users, Package, CheckCircle, Clock, AlertTriangle, Star, Award, MapPin, Activity, PieChart, LineChart, Truck, FileText } from 'lucide-react';
 import { mockTasks, mockBeneficiaries, mockPackages, mockCouriers, calculateStats } from '../../data/mockData';
+import Modal from '../../components/ui/Modal';
+import Button from '../../components/ui/Button';
 
 export default function ComprehensiveReportsPage() {
   const [dateRange, setDateRange] = useState('month');
   const [reportType, setReportType] = useState('overview');
   const [selectedRegion, setSelectedRegion] = useState('all');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFormat, setExportFormat] = useState('json');
 
   const stats = calculateStats();
 
@@ -50,6 +54,10 @@ export default function ComprehensiveReportsPage() {
   ];
 
   const handleExportReport = () => {
+    setShowExportModal(true);
+  };
+
+  const executeExport = () => {
     const reportData = {
       type: reportType,
       dateRange,
@@ -67,16 +75,41 @@ export default function ComprehensiveReportsPage() {
       }
     };
     
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    let dataStr, dataBlob, fileName;
+    
+    if (exportFormat === 'json') {
+      dataStr = JSON.stringify(reportData, null, 2);
+      dataBlob = new Blob([dataStr], { type: 'application/json' });
+      fileName = `تقرير_التوزيع_${reportType}_${new Date().toISOString().split('T')[0]}.json`;
+    } else if (exportFormat === 'csv') {
+      // Simple CSV export for key stats
+      const csvData = [
+        ['المؤشر', 'القيمة'],
+        ['معدل التسليم', `${stats.deliveryRate}%`],
+        ['إجمالي المهام', mockTasks.length],
+        ['المهام المكتملة', mockTasks.filter(t => t.status === 'delivered').length],
+        ['المهام المعلقة', mockTasks.filter(t => t.status === 'pending').length],
+        ['المهام الفاشلة', mockTasks.filter(t => t.status === 'failed').length]
+      ];
+      dataStr = csvData.map(row => row.join(',')).join('\n');
+      dataBlob = new Blob([dataStr], { type: 'text/csv;charset=utf-8;' });
+      fileName = `تقرير_التوزيع_${reportType}_${new Date().toISOString().split('T')[0]}.csv`;
+    } else {
+      // Excel format (simplified as JSON for now)
+      dataStr = JSON.stringify(reportData, null, 2);
+      dataBlob = new Blob([dataStr], { type: 'application/vnd.ms-excel' });
+      fileName = `تقرير_التوزيع_${reportType}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    }
+    
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `تقرير_التوزيع_${reportType}_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = fileName;
     link.click();
     URL.revokeObjectURL(url);
     
-    alert('تم تصدير تقرير الخريطة بنجاح');
+    setShowExportModal(false);
+    alert('تم تصدير التقرير بنجاح');
   };
 
   const getRegionData = (regionId: string) => {
@@ -619,6 +652,109 @@ export default function ComprehensiveReportsPage() {
           </div>
         </div>
       </div>
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <Modal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          title="تصدير التقرير الشامل"
+          size="md"
+        >
+          <div className="p-6 space-y-6">
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+              <h4 className="font-medium text-blue-800 mb-3">معلومات التقرير</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700">نوع التقرير:</span>
+                  <span className="font-medium text-blue-900 mr-2">{reportTypes.find(r => r.id === reportType)?.name}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">الفترة الزمنية:</span>
+                  <span className="font-medium text-blue-900 mr-2">
+                    {dateRange === 'today' ? 'اليوم' :
+                     dateRange === 'week' ? 'هذا الأسبوع' :
+                     dateRange === 'month' ? 'هذا الشهر' :
+                     dateRange === 'quarter' ? 'هذا الربع' : 'هذا العام'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-blue-700">المنطقة:</span>
+                  <span className="font-medium text-blue-900 mr-2">{getRegionData(selectedRegion).name}</span>
+                </div>
+                <div>
+                  <span className="text-blue-700">تاريخ الإنشاء:</span>
+                  <span className="font-medium text-blue-900 mr-2">{new Date().toLocaleDateString('ar-SA')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-4">اختر تنسيق التصدير</h4>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div
+                  onClick={() => setExportFormat('json')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'json'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <h5 className="font-medium text-gray-900">JSON</h5>
+                    <p className="text-sm text-gray-600">ملف JSON مع جميع التفاصيل والإحصائيات</p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setExportFormat('csv')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'csv'
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <h5 className="font-medium text-gray-900">CSV</h5>
+                    <p className="text-sm text-gray-600">ملف CSV للإحصائيات الرئيسية</p>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setExportFormat('excel')}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    exportFormat === 'excel'
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                    <h5 className="font-medium text-gray-900">Excel</h5>
+                    <p className="text-sm text-gray-600">ملف Excel متقدم</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3 space-x-reverse justify-end pt-4">
+              <Button variant="secondary" onClick={() => setShowExportModal(false)}>
+                إلغاء
+              </Button>
+              <Button 
+                variant="primary" 
+                icon={Download} 
+                iconPosition="right"
+                onClick={executeExport}
+              >
+                تصدير التقرير
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
