@@ -333,17 +333,6 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">إجمالي الاستخدام</p>
-              <p className="text-3xl font-bold text-gray-900">{totalUsage}</p>
-            </div>
-            <div className="bg-purple-100 p-4 rounded-2xl">
-              <TrendingUp className="w-8 h-8 text-purple-600" />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Templates Grid */}
