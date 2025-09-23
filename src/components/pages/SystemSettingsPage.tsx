@@ -5,7 +5,6 @@ import { Button, Card, Input, Badge, Modal } from '../ui';
 
 interface SystemSetting {
   id: string;
-  category: string;
   key: string;
   name: string;
   description: string;
@@ -15,142 +14,144 @@ interface SystemSetting {
   isSecret?: boolean;
   lastModified: string;
   modifiedBy: string;
+  icon: any;
 }
 
 export default function SystemSettingsPage() {
   const { logInfo, logError } = useErrorLogger();
-  const [activeCategory, setActiveCategory] = useState('general');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'add' | 'edit' | 'backup' | 'restore'>('add');
+  const [modalType, setModalType] = useState<'add' | 'edit' | 'import' | 'export'>('add');
   const [selectedSetting, setSelectedSetting] = useState<SystemSetting | null>(null);
   const [showSecrets, setShowSecrets] = useState<{ [key: string]: boolean }>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
-  // Mock system settings data
+  // إعدادات النظام الموحدة (فئة واحدة فقط)
   const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([
-    // General Settings
     {
       id: '1',
-      category: 'general',
       key: 'app_name',
       name: 'اسم التطبيق',
-      description: 'الاسم الظاهر للتطبيق في جميع الواجهات',
+      description: 'الاسم الظاهر للتطبيق في جميع الواجهات والصفحات',
       value: 'منصة المساعدات الإنسانية',
       type: 'text',
       lastModified: '2024-12-21',
-      modifiedBy: 'أحمد الإدمن'
+      modifiedBy: 'أحمد الإدمن',
+      icon: Globe
     },
     {
       id: '2',
-      category: 'general',
       key: 'app_version',
       name: 'إصدار التطبيق',
-      description: 'رقم إصدار التطبيق الحالي',
+      description: 'رقم إصدار التطبيق الحالي المعروض للمستخدمين',
       value: '1.0.0',
       type: 'text',
       lastModified: '2024-12-21',
-      modifiedBy: 'النظام'
+      modifiedBy: 'النظام',
+      icon: Package
     },
     {
       id: '3',
-      category: 'general',
       key: 'max_beneficiaries_per_page',
       name: 'عدد المستفيدين في الصفحة',
       description: 'الحد الأقصى لعدد المستفيدين المعروضين في صفحة واحدة',
       value: '50',
-      type: 'number',
+      type: 'select',
+      options: ['10', '20', '50', '100'],
       lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
+      modifiedBy: 'أحمد الإدمن',
+      icon: Users
     },
     {
       id: '4',
-      category: 'general',
       key: 'enable_rtl',
-      name: 'تفعيل الكتابة من اليمين لليسار',
-      description: 'تفعيل دعم اللغة العربية والكتابة من اليمين لليسار',
+      name: 'دعم اللغة العربية',
+      description: 'تفعيل دعم الكتابة من اليمين لليسار والخطوط العربية',
       value: 'true',
       type: 'boolean',
       lastModified: '2024-12-21',
-      modifiedBy: 'أحمد الإدمن'
+      modifiedBy: 'أحمد الإدمن',
+      icon: Globe
     },
-
-    // Performance Settings
     {
       id: '5',
-      category: 'general',
       key: 'sms_provider',
       name: 'مزود خدمة الرسائل النصية',
-      description: 'مزود الخدمة المستخدم لإرسال الرسائل النصية',
+      description: 'مزود الخدمة المستخدم لإرسال الرسائل النصية والتنبيهات',
       value: 'twilio',
       type: 'select',
       options: ['twilio', 'nexmo', 'local'],
       lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
+      modifiedBy: 'أحمد الإدمن',
+      icon: MessageSquare
     },
     {
       id: '6',
-      category: 'general',
       key: 'email_notifications',
       name: 'تفعيل الإشعارات بالبريد الإلكتروني',
-      description: 'إرسال إشعارات للمستخدمين عبر البريد الإلكتروني',
+      description: 'إرسال إشعارات للمستخدمين والمديرين عبر البريد الإلكتروني',
       value: 'true',
       type: 'boolean',
       lastModified: '2024-12-21',
-      modifiedBy: 'أحمد الإدمن'
+      modifiedBy: 'أحمد الإدمن',
+      icon: Mail
     },
     {
       id: '7',
-      category: 'general',
       key: 'sms_api_key',
       name: 'مفتاح API للرسائل النصية',
-      description: 'مفتاح API الخاص بمزود خدمة الرسائل النصية',
+      description: 'مفتاح API الخاص بمزود خدمة الرسائل النصية (سري)',
       value: 'sk_sms_1234567890',
       type: 'password',
       isSecret: true,
       lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
+      modifiedBy: 'أحمد الإدمن',
+      icon: Key
     },
-
-    // Performance Settings
     {
       id: '8',
-      category: 'performance',
-      key: 'max_concurrent_tasks',
-      name: 'الحد الأقصى للمهام المتزامنة',
-      description: 'عدد المهام التي يمكن تنفيذها في نفس الوقت',
-      value: '10',
-      type: 'number',
-      lastModified: '2024-12-18',
-      modifiedBy: 'أحمد الإدمن'
+      key: 'default_language',
+      name: 'اللغة الافتراضية',
+      description: 'اللغة الافتراضية لواجهة النظام',
+      value: 'ar',
+      type: 'select',
+      options: ['ar', 'en'],
+      lastModified: '2024-12-21',
+      modifiedBy: 'أحمد الإدمن',
+      icon: Globe
     },
     {
       id: '9',
-      category: 'performance',
-      key: 'enable_compression',
-      name: 'تفعيل ضغط البيانات',
-      description: 'ضغط البيانات المرسلة لتحسين الأداء',
-      value: 'true',
-      type: 'boolean',
-      lastModified: '2024-12-17',
-      modifiedBy: 'أحمد الإدمن'
+      key: 'contact_email',
+      name: 'بريد الدعم الفني',
+      description: 'عنوان البريد الإلكتروني للدعم الفني والتواصل',
+      value: 'support@humanitarian.ps',
+      type: 'text',
+      lastModified: '2024-12-19',
+      modifiedBy: 'أحمد الإدمن',
+      icon: Mail
+    },
+    {
+      id: '10',
+      key: 'organization_name',
+      name: 'اسم المؤسسة المشغلة',
+      description: 'اسم المؤسسة أو الجهة التي تدير النظام',
+      value: 'وزارة التنمية الاجتماعية - غزة',
+      type: 'text',
+      lastModified: '2024-12-18',
+      modifiedBy: 'أحمد الإدمن',
+      icon: Building2
     }
   ]);
 
   const [editedSettings, setEditedSettings] = useState<{ [key: string]: string }>({});
 
-  const categories = [
-    { id: 'general', name: 'الإعدادات العامة', icon: Settings, color: 'blue' },
-    { id: 'performance', name: 'الأداء', icon: Activity, color: 'purple' }
-  ];
-
   const filteredSettings = systemSettings.filter(setting => {
-    const matchesCategory = activeCategory === 'all' || setting.category === activeCategory;
     const matchesSearch = setting.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          setting.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          setting.key.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesSearch;
   });
 
   const handleSettingChange = (settingId: string, value: string) => {
@@ -200,12 +201,14 @@ export default function SystemSettingsPage() {
   const handleExportSettings = () => {
     const exportData = {
       exportDate: new Date().toISOString(),
+      appName: systemSettings.find(s => s.key === 'app_name')?.value,
+      totalSettings: systemSettings.length,
       settings: systemSettings.map(setting => ({
-        category: setting.category,
         key: setting.key,
         name: setting.name,
         value: setting.isSecret ? '***' : setting.value,
-        type: setting.type
+        type: setting.type,
+        lastModified: setting.lastModified
       }))
     };
     
@@ -223,12 +226,19 @@ export default function SystemSettingsPage() {
   };
 
   const handleImportSettings = () => {
-    setModalType('restore');
+    setModalType('import');
     setShowModal(true);
   };
 
-  const handleCreateBackup = () => {
-    setModalType('backup');
+  const handleAddSetting = () => {
+    setModalType('add');
+    setSelectedSetting(null);
+    setShowModal(true);
+  };
+
+  const handleEditSetting = (setting: SystemSetting) => {
+    setModalType('edit');
+    setSelectedSetting(setting);
     setShowModal(true);
   };
 
@@ -241,23 +251,6 @@ export default function SystemSettingsPage() {
 
   const getSettingValue = (setting: SystemSetting) => {
     return editedSettings[setting.id] !== undefined ? editedSettings[setting.id] : setting.value;
-  };
-
-  const getCategoryIcon = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category ? category.icon : Settings;
-  };
-
-  const getCategoryColor = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId);
-    const colorClasses = {
-      blue: 'bg-blue-100 text-blue-600',
-      red: 'bg-red-100 text-red-600',
-      green: 'bg-green-100 text-green-600',
-      purple: 'bg-purple-100 text-purple-600',
-      orange: 'bg-orange-100 text-orange-600'
-    };
-    return category ? colorClasses[category.color as keyof typeof colorClasses] : 'bg-gray-100 text-gray-600';
   };
 
   const getNotificationClasses = (type: 'success' | 'error' | 'warning') => {
@@ -283,14 +276,27 @@ export default function SystemSettingsPage() {
     switch (setting.type) {
       case 'boolean':
         return (
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <input
-              type="checkbox"
-              checked={value === 'true'}
-              onChange={(e) => handleSettingChange(setting.id, e.target.checked ? 'true' : 'false')}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-600">
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={value === 'true'}
+                onChange={(e) => handleSettingChange(setting.id, e.target.checked ? 'true' : 'false')}
+                className="sr-only"
+                id={`toggle-${setting.id}`}
+              />
+              <label
+                htmlFor={`toggle-${setting.id}`}
+                className={`flex items-center cursor-pointer w-12 h-6 rounded-full transition-colors ${
+                  value === 'true' ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                  value === 'true' ? 'translate-x-6' : 'translate-x-1'
+                }`}></div>
+              </label>
+            </div>
+            <span className={`text-sm font-medium ${value === 'true' ? 'text-green-600' : 'text-gray-500'}`}>
               {value === 'true' ? 'مفعل' : 'معطل'}
             </span>
           </div>
@@ -301,7 +307,7 @@ export default function SystemSettingsPage() {
           <select
             value={value}
             onChange={(e) => handleSettingChange(setting.id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
             {setting.options?.map(option => (
               <option key={option} value={option}>{option}</option>
@@ -316,15 +322,15 @@ export default function SystemSettingsPage() {
               type={showSecrets[setting.id] ? 'text' : 'password'}
               value={value}
               onChange={(e) => handleSettingChange(setting.id, e.target.value)}
-              className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="أدخل القيمة..."
+              className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="أدخل القيمة السرية..."
             />
             <button
               type="button"
               onClick={() => toggleSecretVisibility(setting.id)}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              {showSecrets[setting.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showSecrets[setting.id] ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
         );
@@ -335,7 +341,7 @@ export default function SystemSettingsPage() {
             type="number"
             value={value}
             onChange={(e) => handleSettingChange(setting.id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="أدخل رقم..."
           />
         );
@@ -346,7 +352,7 @@ export default function SystemSettingsPage() {
             type="text"
             value={value}
             onChange={(e) => handleSettingChange(setting.id, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="أدخل النص..."
           />
         );
@@ -354,10 +360,10 @@ export default function SystemSettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 space-x-reverse ${getNotificationClasses(notification.type)}`}>
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-xl flex items-center space-x-3 space-x-reverse ${getNotificationClasses(notification.type)}`}>
           {getNotificationIcon(notification.type)}
           <span className="font-medium">{notification.message}</span>
           <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700">
@@ -366,167 +372,199 @@ export default function SystemSettingsPage() {
         </div>
       )}
 
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 border border-blue-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+              <Settings className="w-8 h-8 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">إعدادات النظام</h1>
+              <p className="text-gray-600 mt-2">إدارة الإعدادات العامة لمنصة المساعدات الإنسانية</p>
+              <div className="flex items-center space-x-2 space-x-reverse mt-3">
+                <Badge variant="info" size="sm">
+                  {systemSettings.length} إعداد
+                </Badge>
+                <Badge variant={hasUnsavedChanges ? 'warning' : 'success'} size="sm">
+                  {hasUnsavedChanges ? 'يوجد تغييرات غير محفوظة' : 'محفوظ'}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex space-x-3 space-x-reverse">
+            <Button 
+              variant="secondary" 
+              icon={Download} 
+              iconPosition="right"
+              onClick={handleExportSettings}
+            >
+              تصدير الإعدادات
+            </Button>
+            <Button 
+              variant="secondary" 
+              icon={Upload} 
+              iconPosition="right"
+              onClick={handleImportSettings}
+            >
+              استيراد الإعدادات
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Data Source Indicator */}
       <Card className="bg-blue-50 border-blue-200" padding="sm">
         <div className="flex items-center space-x-2 space-x-reverse text-blue-600">
           <CheckCircle className="w-4 h-4" />
           <span className="text-sm font-medium">
-            البيانات الوهمية محملة - {systemSettings.length} إعداد في {categories.length} فئات
+            البيانات الوهمية محملة - {systemSettings.length} إعداد عام
           </span>
         </div>
       </Card>
 
-      {/* Actions Bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-3 space-x-reverse">
-          <Button 
-            variant="success" 
-            icon={Save} 
-            iconPosition="right"
-            onClick={handleSaveSettings}
-            disabled={!hasUnsavedChanges}
-          >
-            حفظ التغييرات
-          </Button>
-          <Button 
-            variant="secondary" 
-            icon={RefreshCw} 
-            iconPosition="right"
-            onClick={handleResetSettings}
-            disabled={!hasUnsavedChanges}
-          >
-            إعادة تعيين
-          </Button>
-        </div>
-        <div className="flex space-x-3 space-x-reverse">
-          <Button variant="secondary" icon={Download} iconPosition="right" onClick={handleExportSettings}>
-            تصدير الإعدادات
-          </Button>
-          <Button variant="secondary" icon={Upload} iconPosition="right" onClick={handleImportSettings}>
-            استيراد الإعدادات
-          </Button>
-          <Button variant="primary" icon={Database} iconPosition="right" onClick={handleCreateBackup}>
-            إنشاء نسخة احتياطية
-          </Button>
-        </div>
-      </div>
-
       {/* Unsaved Changes Warning */}
       {hasUnsavedChanges && (
-        <Card className="bg-orange-50 border-orange-200" padding="sm">
-          <div className="flex items-center space-x-3 space-x-reverse">
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
-            <div>
-              <span className="font-medium text-orange-800">يوجد تغييرات غير محفوظة</span>
-              <p className="text-orange-700 text-sm mt-1">تأكد من حفظ التغييرات قبل مغادرة الصفحة</p>
+        <Card className="bg-orange-50 border-orange-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <AlertTriangle className="w-6 h-6 text-orange-600" />
+              <div>
+                <span className="font-bold text-orange-800">يوجد تغييرات غير محفوظة</span>
+                <p className="text-orange-700 text-sm mt-1">تأكد من حفظ التغييرات قبل مغادرة الصفحة</p>
+              </div>
+            </div>
+            <div className="flex space-x-2 space-x-reverse">
+              <Button
+                variant="success"
+                icon={Save}
+                iconPosition="right"
+                onClick={handleSaveSettings}
+              >
+                حفظ التغييرات
+              </Button>
+              <Button
+                variant="secondary"
+                icon={RefreshCw}
+                iconPosition="right"
+                onClick={handleResetSettings}
+              >
+                إعادة تعيين
+              </Button>
             </div>
           </div>
         </Card>
       )}
 
-      {/* Categories and Search */}
+      {/* Search and Actions */}
       <Card>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-gray-900">فئات الإعدادات</h3>
-          <Input
-            type="text"
-            icon={Settings}
-            iconPosition="right"
-            placeholder="البحث في الإعدادات..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            onClick={() => setActiveCategory('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeCategory === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            جميع الفئات ({systemSettings.length})
-          </button>
-          {categories.map(category => {
-            const IconComponent = category.icon;
-            const categorySettings = systemSettings.filter(s => s.category === category.id);
-            return (
-              <button
-                key={category.id}
-                onClick={() => setActiveCategory(category.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 space-x-reverse ${
-                  activeCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <IconComponent className="w-4 h-4" />
-                <span>{category.name} ({categorySettings.length})</span>
-              </button>
-            );
-          })}
+        <div className="flex items-center justify-between">
+          <div className="flex-1 max-w-md">
+            <Input
+              type="text"
+              icon={Settings}
+              iconPosition="right"
+              placeholder="البحث في الإعدادات..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex space-x-3 space-x-reverse">
+            <Button
+              variant="secondary"
+              icon={Plus}
+              iconPosition="right"
+              onClick={handleAddSetting}
+            >
+              إضافة إعداد جديد
+            </Button>
+          </div>
         </div>
       </Card>
 
-      {/* Settings List */}
-      <div className="space-y-4">
+      {/* Settings Grid */}
+      <div className="grid gap-6">
         {filteredSettings.length > 0 ? (
           filteredSettings.map((setting) => {
-            const IconComponent = getCategoryIcon(setting.category);
+            const IconComponent = setting.icon;
             const isEdited = editedSettings[setting.id] !== undefined;
             
             return (
-              <Card key={setting.id} className={isEdited ? 'border-blue-300 bg-blue-50' : ''}>
-                <div className="grid md:grid-cols-3 gap-6 items-center">
-                  <div className="md:col-span-1">
-                    <div className="flex items-start space-x-3 space-x-reverse">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getCategoryColor(setting.category)}`}>
-                        <IconComponent className="w-4 h-4" />
+              <Card 
+                key={setting.id} 
+                className={`transition-all duration-200 ${
+                  isEdited ? 'border-blue-300 bg-blue-50 shadow-lg' : 'hover:shadow-md'
+                }`}
+              >
+                <div className="grid lg:grid-cols-12 gap-6 items-center">
+                  {/* Setting Info */}
+                  <div className="lg:col-span-5">
+                    <div className="flex items-start space-x-4 space-x-reverse">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <IconComponent className="w-6 h-6 text-blue-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <h4 className="font-semibold text-gray-900">{setting.name}</h4>
+                        <div className="flex items-center space-x-3 space-x-reverse mb-2">
+                          <h3 className="text-lg font-bold text-gray-900">{setting.name}</h3>
                           {isEdited && (
                             <Badge variant="warning" size="sm">
                               معدل
                             </Badge>
                           )}
                           {setting.isSecret && (
-                            <Lock className="w-4 h-4 text-red-500" title="إعداد سري" />
+                            <div className="flex items-center space-x-1 space-x-reverse">
+                              <Lock className="w-4 h-4 text-red-500" />
+                              <Badge variant="error" size="sm">سري</Badge>
+                            </div>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{setting.description}</p>
-                        <div className="flex items-center space-x-2 space-x-reverse mt-2 text-xs text-gray-500">
-                          <span>آخر تعديل: {new Date(setting.lastModified).toLocaleDateString('ar-SA')}</span>
-                          <span>•</span>
-                          <span>بواسطة: {setting.modifiedBy}</span>
+                        <p className="text-gray-600 leading-relaxed mb-3">{setting.description}</p>
+                        <div className="flex items-center space-x-4 space-x-reverse text-xs text-gray-500">
+                          <div className="flex items-center space-x-1 space-x-reverse">
+                            <Key className="w-3 h-3" />
+                            <span className="font-mono bg-gray-100 px-2 py-1 rounded">{setting.key}</span>
+                          </div>
+                          <div className="flex items-center space-x-1 space-x-reverse">
+                            <Clock className="w-3 h-3" />
+                            <span>آخر تعديل: {new Date(setting.lastModified).toLocaleDateString('ar-SA')}</span>
+                          </div>
+                          <div className="flex items-center space-x-1 space-x-reverse">
+                            <Users className="w-3 h-3" />
+                            <span>بواسطة: {setting.modifiedBy}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="md:col-span-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {/* Setting Value */}
+                  <div className="lg:col-span-5">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       القيمة الحالية
                     </label>
                     {renderSettingInput(setting)}
                   </div>
 
-                  <div className="md:col-span-1">
-                    <div className="text-sm text-gray-600">
-                      <div className="flex items-center space-x-2 space-x-reverse mb-2">
-                        <Key className="w-4 h-4 text-gray-400" />
-                        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{setting.key}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 space-x-reverse">
-                        <span className="text-gray-500">النوع:</span>
-                        <Badge variant="neutral" size="sm">
-                          {setting.type}
-                        </Badge>
-                      </div>
+                  {/* Actions */}
+                  <div className="lg:col-span-2">
+                    <div className="flex space-x-2 space-x-reverse justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={Edit}
+                        onClick={() => handleEditSetting(setting)}
+                      >
+                        تعديل
+                      </Button>
+                      {setting.isSecret && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={showSecrets[setting.id] ? EyeOff : Eye}
+                          onClick={() => toggleSecretVisibility(setting.id)}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -536,83 +574,84 @@ export default function SystemSettingsPage() {
         ) : (
           <Card className="p-12">
             <div className="text-center text-gray-500">
-              <Settings className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-lg font-medium">
-                {searchTerm ? 'لا توجد إعدادات مطابقة للبحث' : 'لا توجد إعدادات في هذه الفئة'}
+              <Settings className="w-16 h-16 mx-auto mb-6 text-gray-300" />
+              <h3 className="text-xl font-bold text-gray-700 mb-2">
+                {searchTerm ? 'لا توجد إعدادات مطابقة للبحث' : 'لا توجد إعدادات'}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {searchTerm ? 'جرب تعديل مصطلح البحث' : 'ابدأ بإضافة إعداد جديد للنظام'}
               </p>
-              <p className="text-sm mt-2">
-                {searchTerm ? 'جرب تعديل مصطلح البحث' : 'اختر فئة أخرى لعرض الإعدادات'}
-              </p>
+              {!searchTerm && (
+                <Button
+                  variant="primary"
+                  icon={Plus}
+                  iconPosition="right"
+                  onClick={handleAddSetting}
+                >
+                  إضافة إعداد جديد
+                </Button>
+              )}
             </div>
           </Card>
         )}
       </div>
 
+      {/* Quick Actions */}
+      <Card className="bg-gray-50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">إجراءات سريعة</h3>
+            <p className="text-gray-600">إجراءات شائعة لإدارة إعدادات النظام</p>
+          </div>
+          <div className="flex space-x-3 space-x-reverse">
+            <Button
+              variant="success"
+              icon={Save}
+              iconPosition="right"
+              onClick={handleSaveSettings}
+              disabled={!hasUnsavedChanges}
+            >
+              حفظ جميع التغييرات
+            </Button>
+            <Button
+              variant="secondary"
+              icon={RefreshCw}
+              iconPosition="right"
+              onClick={handleResetSettings}
+              disabled={!hasUnsavedChanges}
+            >
+              إعادة تعيين الكل
+            </Button>
+          </div>
+        </div>
+      </Card>
 
-      {/* Modal for Backup/Restore */}
+      {/* Modal for Add/Edit/Import */}
       {showModal && (
         <Modal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           title={
-            modalType === 'backup' ? 'إنشاء نسخة احتياطية' :
-            modalType === 'restore' ? 'استيراد الإعدادات' :
-            'إجراء'
+            modalType === 'add' ? 'إضافة إعداد جديد' :
+            modalType === 'edit' ? 'تعديل الإعداد' :
+            modalType === 'import' ? 'استيراد الإعدادات' :
+            'تصدير الإعدادات'
           }
           size="md"
         >
           <div className="p-6">
-            {modalType === 'backup' && (
+            {modalType === 'import' && (
               <div className="text-center">
-                <div className="bg-blue-100 p-6 rounded-xl mb-6">
-                  <Database className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">إنشاء نسخة احتياطية</h4>
-                  <p className="text-gray-600">سيتم إنشاء نسخة احتياطية من جميع إعدادات النظام</p>
+                <div className="bg-blue-100 p-8 rounded-2xl mb-6">
+                  <Upload className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                  <h4 className="text-xl font-bold text-gray-900 mb-3">استيراد إعدادات النظام</h4>
+                  <p className="text-gray-600">اختر ملف JSON يحتوي على إعدادات النظام المحفوظة مسبقاً</p>
                 </div>
                 
-                <div className="space-y-4 text-sm text-gray-600 mb-6">
-                  <div className="flex justify-between">
-                    <span>عدد الإعدادات:</span>
-                    <span className="font-medium">{systemSettings.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>الفئات:</span>
-                    <span className="font-medium">{categories.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>تاريخ النسخة:</span>
-                    <span className="font-medium">{new Date().toLocaleDateString('ar-SA')}</span>
-                  </div>
-                </div>
-
-                <div className="flex space-x-3 space-x-reverse justify-center">
-                  <Button variant="secondary" onClick={() => setShowModal(false)}>
-                    إلغاء
-                  </Button>
-                  <Button 
-                    variant="primary" 
-                    onClick={() => {
-                      handleExportSettings();
-                      setShowModal(false);
-                    }}
-                  >
-                    إنشاء النسخة الاحتياطية
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {modalType === 'restore' && (
-              <div className="text-center">
-                <div className="bg-orange-100 p-6 rounded-xl mb-6">
-                  <Upload className="w-12 h-12 text-orange-600 mx-auto mb-4" />
-                  <h4 className="text-lg font-bold text-gray-900 mb-2">استيراد الإعدادات</h4>
-                  <p className="text-gray-600">اختر ملف النسخة الاحتياطية لاستعادة الإعدادات</p>
-                </div>
-                
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 mb-6 hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-2">اسحب ملف JSON هنا أو اضغط للاختيار</p>
+                <div className="border-2 border-dashed border-blue-300 rounded-2xl p-12 mb-6 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
+                  <Upload className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                  <p className="text-gray-700 font-medium mb-2">اسحب ملف JSON هنا أو اضغط للاختيار</p>
+                  <p className="text-sm text-gray-500 mb-4">الملفات المدعومة: .json فقط</p>
                   <input
                     type="file"
                     accept=".json"
@@ -621,18 +660,29 @@ export default function SystemSettingsPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        alert(`تم اختيار الملف: ${file.name}\nسيتم تطوير وظيفة الاستيراد لاحقاً`);
+                        setNotification({ message: `تم اختيار الملف: ${file.name} - سيتم تطوير وظيفة الاستيراد لاحقاً`, type: 'success' });
+                        setTimeout(() => setNotification(null), 3000);
                         setShowModal(false);
                       }
                     }}
                   />
                   <label
                     htmlFor="settings-upload"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-flex items-center"
+                    className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors cursor-pointer inline-flex items-center font-medium"
                   >
-                    <Upload className="w-4 h-4 ml-2" />
-                    اختيار ملف
+                    <Upload className="w-5 h-5 ml-2" />
+                    اختيار ملف الإعدادات
                   </label>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    <span className="font-medium text-yellow-800">تحذير</span>
+                  </div>
+                  <p className="text-yellow-700 text-sm mt-2">
+                    استيراد الإعدادات سيستبدل جميع الإعدادات الحالية. تأكد من إنشاء نسخة احتياطية أولاً.
+                  </p>
                 </div>
 
                 <div className="flex space-x-3 space-x-reverse justify-center">
@@ -642,34 +692,78 @@ export default function SystemSettingsPage() {
                 </div>
               </div>
             )}
+
+            {(modalType === 'add' || modalType === 'edit') && (
+              <div className="text-center">
+                <div className="bg-gray-100 p-8 rounded-2xl mb-6">
+                  <Plus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h4 className="text-xl font-bold text-gray-900 mb-3">
+                    {modalType === 'add' ? 'إضافة إعداد جديد' : 'تعديل الإعداد'}
+                  </h4>
+                  <p className="text-gray-600">
+                    {modalType === 'add' 
+                      ? 'سيتم تطوير نموذج إضافة إعداد جديد هنا' 
+                      : 'سيتم تطوير نموذج تعديل الإعداد هنا'
+                    }
+                  </p>
+                </div>
+                
+                <div className="flex space-x-3 space-x-reverse justify-center">
+                  <Button variant="secondary" onClick={() => setShowModal(false)}>
+                    إلغاء
+                  </Button>
+                  <Button variant="primary">
+                    {modalType === 'add' ? 'إضافة الإعداد' : 'حفظ التغييرات'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}
 
-      {/* Security Warning */}
-      <Card className="bg-red-50 border-red-200">
-        <div className="flex items-start space-x-3 space-x-reverse">
-          <Shield className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
+      {/* Security and Usage Guidelines */}
+      <Card className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+        <div className="flex items-start space-x-4 space-x-reverse">
+          <Shield className="w-8 h-8 text-red-600 mt-1 flex-shrink-0" />
           <div>
-            <h4 className="font-medium text-red-800 mb-3">تحذيرات أمنية مهمة</h4>
-            <ul className="text-sm text-red-700 space-y-2">
-              <li className="flex items-start space-x-2 space-x-reverse">
-                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                <span>تأكد من عدم مشاركة الإعدادات السرية مع أشخاص غير مخولين</span>
-              </li>
-              <li className="flex items-start space-x-2 space-x-reverse">
-                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                <span>قم بإنشاء نسخ احتياطية منتظمة من الإعدادات</span>
-              </li>
-              <li className="flex items-start space-x-2 space-x-reverse">
-                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                <span>راجع الإعدادات الأمنية بانتظام وحدثها حسب الحاجة</span>
-              </li>
-              <li className="flex items-start space-x-2 space-x-reverse">
-                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                <span>تأكد من قوة كلمات المرور ومفاتيح التشفير</span>
-              </li>
-            </ul>
+            <h4 className="font-bold text-red-800 mb-4">إرشادات الأمان والاستخدام</h4>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h5 className="font-medium text-red-700 mb-3">تحذيرات أمنية:</h5>
+                <ul className="text-sm text-red-600 space-y-2">
+                  <li className="flex items-start space-x-2 space-x-reverse">
+                    <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <span>لا تشارك الإعدادات السرية مع أشخاص غير مخولين</span>
+                  </li>
+                  <li className="flex items-start space-x-2 space-x-reverse">
+                    <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <span>قم بتصدير الإعدادات بانتظام كنسخة احتياطية</span>
+                  </li>
+                  <li className="flex items-start space-x-2 space-x-reverse">
+                    <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <span>راجع مفاتيح API وكلمات المرور بانتظام</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-medium text-orange-700 mb-3">نصائح الاستخدام:</h5>
+                <ul className="text-sm text-orange-600 space-y-2">
+                  <li className="flex items-start space-x-2 space-x-reverse">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>احفظ التغييرات فور الانتهاء من التعديل</span>
+                  </li>
+                  <li className="flex items-start space-x-2 space-x-reverse">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>اختبر الإعدادات الجديدة في بيئة التطوير أولاً</span>
+                  </li>
+                  <li className="flex items-start space-x-2 space-x-reverse">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>راجع سجل المراجعة لمتابعة التغييرات</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </Card>
