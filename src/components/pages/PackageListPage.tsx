@@ -333,6 +333,17 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
           </div>
         </div>
 
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">إجمالي الاستخدام</p>
+              <p className="text-3xl font-bold text-gray-900">{totalUsage}</p>
+            </div>
+            <div className="bg-purple-100 p-4 rounded-2xl">
+              <TrendingUp className="w-8 h-8 text-purple-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Templates Grid */}
@@ -364,7 +375,7 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{template.description}</p>
 
                   {/* Template Stats */}
-                  <div className="grid grid-cols-3 gap-4 text-center"> {/* Fix: usage_count is not status */}
+                  <div className="grid grid-cols-2 gap-4 text-center"> {/* Fix: usage_count is not status */}
                     <div>
                       <p className="text-lg font-bold text-blue-600">{template.items?.length || template.contents.length}</p>
                       <p className="text-xs text-gray-600">عناصر</p>
@@ -372,10 +383,6 @@ export default function PackageListPage({ loggedInUser }: PackageListPageProps) 
                     <div>
                       <p className="text-lg font-bold text-green-600">{template.totalWeight?.toFixed(1) || 0}</p>
                       <p className="text-xs text-gray-600">كيلو</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-purple-600">{template.estimatedCost}</p>
-                      <p className="text-xs text-gray-600">شيكل</p>
                     </div>
                   </div>
                 </div>
