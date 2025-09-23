@@ -8,16 +8,26 @@ import {
   type SystemUser, 
   type Permission 
 } from '../data/mockData';
+import { Button, Card, Input, Badge, Modal, ConfirmationModal } from './ui';
+import { useErrorLogger } from '../utils/errorLogger';
 
 interface PermissionsManagementProps {
 }
 
 export default function PermissionsManagement({}: PermissionsManagementProps) {
+  const { logInfo, logError } = useErrorLogger();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'add-role' | 'edit-role' | 'add-user' | 'assign-role'>('add-role');
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'delete-role' | 'toggle-user' | 'delete-user';
+    id: string;
+    name: string;
+  } | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
   
   // Make data editable
   const [roles, setRoles] = useState<Role[]>(initialMockRoles);
@@ -35,6 +45,16 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
     roleId: ''
   });
 
+  // New user form state
+  const [newUserForm, setNewUserForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    roleId: '',
+    associatedType: '' as 'organization' | 'family' | '',
+    associatedId: '',
+    status: 'active' as 'active' | 'inactive'
+  });
   const tabs = [
     { id: 'overview', name: 'نظرة عامة', icon: Shield },
     { id: 'roles', name: 'الأدوار', icon: Crown },
@@ -81,6 +101,15 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
   const handleAddUser = () => {
     setModalType('add-user');
     setSelectedItem(null);
+    setNewUserForm({
+      name: '',
+      email: '',
+      phone: '',
+      roleId: '',
+      associatedType: '',
+      associatedId: '',
+      status: 'active'
+    });
     setShowModal(true);
   };
 
@@ -96,7 +125,8 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
 
   const handleCreateOrUpdateRole = () => {
     if (!roleForm.name.trim()) {
-      alert('اسم الدور مطلوب');
+      setNotification({ message: 'اسم الدور مطلوب', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -114,7 +144,9 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
             : role
         )
       );
-      alert('تم تحديث الدور بنجاح');
+      setNotification({ message: 'تم تحديث الدور بنجاح', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
+      logInfo(`تم تحديث الدور: ${roleForm.name}`, 'PermissionsManagement');
     } else {
       // Create new role
       const newRole: Role = {
@@ -127,7 +159,9 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
         createdAt: new Date().toISOString()
       };
       setRoles(prevRoles => [...prevRoles, newRole]);
-      alert('تم إنشاء الدور بنجاح');
+      setNotification({ message: 'تم إنشاء الدور بنجاح', type: 'success' });
+      setTimeout(() => setNotification(null), 3000);
+      logInfo(`تم إنشاء دور جديد: ${roleForm.name}`, 'PermissionsManagement');
     }
 
     setShowModal(false);
@@ -135,9 +169,65 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
     setSelectedItem(null);
   };
 
+  const handleCreateUser = () => {
+    if (!newUserForm.name.trim() || !newUserForm.email.trim() || !newUserForm.roleId) {
+      setNotification({ message: 'يرجى إدخال جميع الحقول المطلوبة', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
+
+    // Check if email already exists
+    const existingUser = systemUsers.find(u => u.email.toLowerCase() === newUserForm.email.toLowerCase());
+    if (existingUser) {
+      setNotification({ message: 'البريد الإلكتروني مستخدم بالفعل', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
+      return;
+    }
+
+    // Create new user
+    const newUser: SystemUser = {
+      id: `user-${Date.now()}`,
+      name: newUserForm.name.trim(),
+      email: newUserForm.email.trim(),
+      phone: newUserForm.phone.trim(),
+      roleId: newUserForm.roleId,
+      associatedType: newUserForm.associatedType || null,
+      associatedId: newUserForm.associatedId || null,
+      status: newUserForm.status,
+      lastLogin: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+
+    setSystemUsers(prevUsers => [...prevUsers, newUser]);
+    
+    // Update role user count
+    setRoles(prevRoles =>
+      prevRoles.map(role =>
+        role.id === newUserForm.roleId
+          ? { ...role, userCount: role.userCount + 1 }
+          : role
+      )
+    );
+
+    setNotification({ message: `تم إنشاء المستخدم ${newUserForm.name} بنجاح`, type: 'success' });
+    setTimeout(() => setNotification(null), 3000);
+    logInfo(`تم إنشاء مستخدم جديد: ${newUserForm.name}`, 'PermissionsManagement');
+
+    setShowModal(false);
+    setNewUserForm({
+      name: '',
+      email: '',
+      phone: '',
+      roleId: '',
+      associatedType: '',
+      associatedId: '',
+      status: 'active'
+    });
+  };
   const handleUpdateUserRole = () => {
     if (!userRoleForm.userId || !userRoleForm.roleId) {
-      alert('يجب اختيار المستخدم والدور');
+      setNotification({ message: 'يجب اختيار المستخدم والدور', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
@@ -166,27 +256,151 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
       })
     );
 
-    alert('تم تحديث دور المستخدم بنجاح');
+    setNotification({ message: 'تم تحديث دور المستخدم بنجاح', type: 'success' });
+    setTimeout(() => setNotification(null), 3000);
+    logInfo(`تم تحديث دور المستخدم: ${oldUser?.name}`, 'PermissionsManagement');
     setShowModal(false);
     setUserRoleForm({ userId: '', roleId: '' });
     setSelectedItem(null);
   };
 
   const handleDeleteRole = (roleId: string) => {
-    if (confirm('هل أنت متأكد من حذف هذا الدور؟')) {
-      // Check if role is assigned to users
-      const usersWithRole = systemUsers.filter(user => user.roleId === roleId);
-      if (usersWithRole.length > 0) {
-        alert(`لا يمكن حذف هذا الدور لأنه مُعيّن لـ ${usersWithRole.length} مستخدم`);
-        return;
-      }
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
 
-      setRoles(prevRoles => prevRoles.filter(role => role.id !== roleId));
-      alert('تم حذف الدور بنجاح');
+    // Check if role is assigned to users
+    const usersWithRole = systemUsers.filter(user => user.roleId === roleId);
+    if (usersWithRole.length > 0) {
+      setNotification({ 
+        message: `لا يمكن حذف هذا الدور لأنه مُعيّن لـ ${usersWithRole.length} مستخدم`, 
+        type: 'error' 
+      });
+      setTimeout(() => setNotification(null), 3000);
+      return;
     }
+
+    setConfirmAction({
+      type: 'delete-role',
+      id: roleId,
+      name: role.name
+    });
+    setShowConfirmModal(true);
   };
 
   const toggleUserStatus = (userId: string) => {
+    const user = systemUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    setConfirmAction({
+      type: 'toggle-user',
+      id: userId,
+      name: user.name
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    const user = systemUsers.find(u => u.id === userId);
+    if (!user) return;
+
+    setConfirmAction({
+      type: 'delete-user',
+      id: userId,
+      name: user.name
+    });
+    setShowConfirmModal(true);
+  };
+
+  const executeConfirmedAction = () => {
+    if (!confirmAction) return;
+
+    try {
+      switch (confirmAction.type) {
+        case 'delete-role':
+          setRoles(prevRoles => prevRoles.filter(role => role.id !== confirmAction.id));
+          setNotification({ message: `تم حذف الدور "${confirmAction.name}" بنجاح`, type: 'success' });
+          logInfo(`تم حذف الدور: ${confirmAction.name}`, 'PermissionsManagement');
+          break;
+
+        case 'toggle-user':
+          const user = systemUsers.find(u => u.id === confirmAction.id);
+          const newStatus = user?.status === 'active' ? 'inactive' : 'active';
+          
+          setSystemUsers(prevUsers =>
+            prevUsers.map(user =>
+              user.id === confirmAction.id
+                ? { ...user, status: newStatus }
+                : user
+            )
+          );
+          setNotification({ 
+            message: `تم ${newStatus === 'active' ? 'تفعيل' : 'إيقاف'} المستخدم "${confirmAction.name}" بنجاح`, 
+            type: 'success' 
+          });
+          logInfo(`تم ${newStatus === 'active' ? 'تفعيل' : 'إيقاف'} المستخدم: ${confirmAction.name}`, 'PermissionsManagement');
+          break;
+
+        case 'delete-user':
+          const userToDelete = systemUsers.find(u => u.id === confirmAction.id);
+          if (userToDelete) {
+            // Update role user count
+            setRoles(prevRoles =>
+              prevRoles.map(role =>
+                role.id === userToDelete.roleId
+                  ? { ...role, userCount: Math.max(0, role.userCount - 1) }
+                  : role
+              )
+            );
+            
+            setSystemUsers(prevUsers => prevUsers.filter(user => user.id !== confirmAction.id));
+            setNotification({ message: `تم حذف المستخدم "${confirmAction.name}" بنجاح`, type: 'success' });
+            logInfo(`تم حذف المستخدم: ${confirmAction.name}`, 'PermissionsManagement');
+          }
+          break;
+      }
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error) {
+      setNotification({ message: 'حدث خطأ في تنفيذ العملية', type: 'error' });
+      setTimeout(() => setNotification(null), 3000);
+      logError(error as Error, 'PermissionsManagement');
+    }
+  };
+
+  const getConfirmationMessage = () => {
+    if (!confirmAction) return { title: '', message: '', confirmText: '', variant: 'primary' as const };
+
+    switch (confirmAction.type) {
+      case 'delete-role':
+        return {
+          title: 'تأكيد حذف الدور',
+          message: `هل أنت متأكد من حذف الدور "${confirmAction.name}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`,
+          confirmText: 'حذف الدور',
+          variant: 'danger' as const
+        };
+      case 'toggle-user':
+        const user = systemUsers.find(u => u.id === confirmAction.id);
+        const action = user?.status === 'active' ? 'إيقاف' : 'تفعيل';
+        return {
+          title: `تأكيد ${action} المستخدم`,
+          message: `هل أنت متأكد من ${action} المستخدم "${confirmAction.name}"؟\n\n${
+            user?.status === 'active' 
+              ? 'سيتم منع المستخدم من الوصول للنظام'
+              : 'سيتم السماح للمستخدم بالوصول للنظام'
+          }`,
+          confirmText: `${action} المستخدم`,
+          variant: user?.status === 'active' ? 'warning' as const : 'success' as const
+        };
+      case 'delete-user':
+        return {
+          title: 'تأكيد حذف المستخدم',
+          message: `هل أنت متأكد من حذف المستخدم "${confirmAction.name}"؟\n\nسيتم حذف جميع بيانات المستخدم وصلاحياته.\nهذا الإجراء لا يمكن التراجع عنه.`,
+          confirmText: 'حذف المستخدم',
+          variant: 'danger' as const
+        };
+      default:
+        return { title: '', message: '', confirmText: '', variant: 'primary' as const };
+    }
+  };
     setSystemUsers(prevUsers =>
       prevUsers.map(user =>
         user.id === userId
@@ -201,7 +415,8 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
   };
 
   const handleEditUserPermissions = (user: SystemUser) => {
-    alert(`سيتم فتح واجهة تعديل الصلاحيات الخاصة بـ ${user.name}`);
+    setNotification({ message: `سيتم فتح واجهة تعديل الصلاحيات الخاصة بـ ${user.name}`, type: 'success' });
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const getPermissionsByRole = (roleId: string): Permission[] => {
@@ -241,6 +456,21 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
     return grouped;
   };
 
+  const getNotificationClasses = (type: 'success' | 'error' | 'warning') => {
+    switch (type) {
+      case 'success': return 'bg-green-100 border-green-200 text-green-800';
+      case 'error': return 'bg-red-100 border-red-200 text-red-800';
+      case 'warning': return 'bg-orange-100 border-orange-200 text-orange-800';
+    }
+  };
+
+  const getNotificationIcon = (type: 'success' | 'error' | 'warning') => {
+    switch (type) {
+      case 'success': return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'error': return <AlertTriangle className="w-5 h-5 text-red-600" />;
+      case 'warning': return <AlertTriangle className="w-5 h-5 text-orange-600" />;
+    }
+  };
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     role.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -256,8 +486,20 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
   const adminUsers = systemUsers.filter(u => u.roleId === '1').length;
   const permissionsByCategory = getPermissionsByCategory();
 
+  const confirmationData = getConfirmationMessage();
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 space-x-reverse ${getNotificationClasses(notification.type)}`}>
+          {getNotificationIcon(notification.type)}
+          <span className="font-medium">{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -361,13 +603,14 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">الأدوار في النظام</h3>
-                <button
+                <Button
+                  variant="primary"
+                  icon={Plus}
+                  iconPosition="right"
                   onClick={handleAddRole}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center"
                 >
-                  <Plus className="w-4 h-4 ml-2" />
                   إضافة دور جديد
-                </button>
+                </Button>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -436,35 +679,34 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                 <p className="text-gray-600 mt-1">إنشاء وتعديل أدوار المستخدمين</p>
               </div>
               <div className="flex space-x-3 space-x-reverse">
-                <button
+                <Button
+                  variant="primary"
+                  icon={Plus}
+                  iconPosition="right"
                   onClick={handleAddRole}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center"
                 >
-                  <Plus className="w-4 h-4 ml-2" />
                   إضافة دور جديد
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Search */}
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+            <Card>
               <div className="flex items-center space-x-4 space-x-reverse">
-                <div className="flex-1 relative">
-                  <Search className="w-5 h-5 absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="البحث في الأدوار..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pr-12 pl-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <button className="flex items-center space-x-2 space-x-reverse px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                  <Filter className="w-4 h-4 ml-2" />
-                  <span>فلترة</span>
-                </button>
+                <Input
+                  type="text"
+                  icon={Search}
+                  iconPosition="right"
+                  placeholder="البحث في الأدوار..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+                <Button variant="secondary" icon={Filter} iconPosition="right">
+                  فلترة
+                </Button>
               </div>
-            </div>
+            </Card>
 
             {/* Roles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -536,38 +778,40 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                 <p className="text-gray-600 mt-1">إدارة مستخدمي النظام وأدوارهم</p>
               </div>
               <div className="flex space-x-3 space-x-reverse">
-                <button
+                <Button
+                  variant="primary"
+                  icon={UserPlus}
+                  iconPosition="right"
                   onClick={handleAddUser}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center"
                 >
-                  <UserPlus className="w-4 h-4 ml-2" />
                   إضافة مستخدم
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Search */}
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+            <Card>
               <div className="flex items-center space-x-4 space-x-reverse">
-                <div className="flex-1 relative">
-                  <Search className="w-5 h-5 absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="البحث في المستخدمين..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pr-12 pl-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <button className="flex items-center space-x-2 space-x-reverse px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
-                  <Filter className="w-4 h-4 ml-2" />
-                  <span>فلترة</span>
-                </button>
+                <Input
+                  type="text"
+                  icon={Search}
+                  iconPosition="right"
+                  placeholder="البحث في المستخدمين..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+                <Button variant="secondary" icon={Filter} iconPosition="right">
+                  فلترة
+                </Button>
               </div>
-            </div>
+            </Card>
 
             {/* Users List */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+            <Card padding="none" className="overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-900">قائمة المستخدمين ({filteredUsers.length})</h3>
+              </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -610,22 +854,21 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                           {user.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(getRoleName(user.roleId))}`}>
+                          <Badge variant="info" size="sm">
                             {getRoleName(user.roleId)}
-                          </div>
+                          </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(user.lastLogin).toLocaleDateString('ar-SA')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            user.status === 'active' ? 'bg-green-100 text-green-800' :
-                            user.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          <Badge variant={
+                            user.status === 'active' ? 'success' :
+                            user.status === 'inactive' ? 'neutral' : 'error'
+                          } size="sm">
                             {user.status === 'active' ? 'نشط' : 
                              user.status === 'inactive' ? 'غير نشط' : 'معلق'}
-                          </span>
+                          </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2 space-x-reverse">
@@ -650,6 +893,13 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                             >
                               <Settings className="w-4 h-4" />
                             </button>
+                            <button 
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                              title="حذف المستخدم"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -657,7 +907,7 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </Card>
           </div>
         )}
 
@@ -716,48 +966,39 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir="rtl">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">
-                {modalType === 'add-role' ? 'إضافة دور جديد' :
-                 modalType === 'edit-role' ? 'تعديل الدور' :
-                 modalType === 'add-user' ? 'إضافة مستخدم جديد' :
-                 'تعيين دور'}
-              </h3>
-              <button 
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={
+          modalType === 'add-role' ? 'إضافة دور جديد' :
+          modalType === 'edit-role' ? 'تعديل الدور' :
+          modalType === 'add-user' ? 'إضافة مستخدم جديد' :
+          'تعيين دور'
+        }
+        size="lg"
+      >
+        <div className="p-6">
             
             {/* Role Form */}
             {(modalType === 'add-role' || modalType === 'edit-role') && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">اسم الدور</label>
-                  <input
-                    type="text"
-                    value={roleForm.name}
-                    onChange={(e) => setRoleForm({...roleForm, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="أدخل اسم الدور"
-                  />
-                </div>
+                <Input
+                  label="اسم الدور *"
+                  type="text"
+                  value={roleForm.name}
+                  onChange={(e) => setRoleForm({...roleForm, name: e.target.value})}
+                  placeholder="أدخل اسم الدور"
+                  required
+                />
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">وصف الدور</label>
-                  <textarea
-                    value={roleForm.description}
-                    onChange={(e) => setRoleForm({...roleForm, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={3}
-                    placeholder="أدخل وصف الدور"
-                  />
-                </div>
+                <Input
+                  label="وصف الدور"
+                  type="textarea"
+                  value={roleForm.description}
+                  onChange={(e) => setRoleForm({...roleForm, description: e.target.value})}
+                  placeholder="أدخل وصف الدور"
+                  rows={3}
+                />
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">الصلاحيات</label>
@@ -798,23 +1039,124 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
+                <div className="flex space-x-3 space-x-reverse justify-end pt-4">
+                  <Button variant="secondary" onClick={() => setShowModal(false)}>
                     إلغاء
-                  </button>
-                  <button 
-                    onClick={handleCreateOrUpdateRole}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                  >
+                  </Button>
+                  <Button variant="primary" onClick={handleCreateOrUpdateRole}>
                     {modalType === 'add-role' ? 'إضافة الدور' : 'حفظ التغييرات'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
 
+            {/* Add User Form */}
+            {modalType === 'add-user' && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                  <h4 className="font-medium text-blue-800 mb-2">إضافة مستخدم جديد للنظام</h4>
+                  <p className="text-blue-700 text-sm">سيتم إنشاء حساب جديد مع الصلاحيات المحددة</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Input
+                    label="الاسم الكامل *"
+                    type="text"
+                    value={newUserForm.name}
+                    onChange={(e) => setNewUserForm({...newUserForm, name: e.target.value})}
+                    placeholder="مثال: أحمد محمد الغزاوي"
+                    required
+                  />
+
+                  <Input
+                    label="البريد الإلكتروني *"
+                    type="email"
+                    value={newUserForm.email}
+                    onChange={(e) => setNewUserForm({...newUserForm, email: e.target.value})}
+                    placeholder="مثال: ahmed@example.com"
+                    required
+                  />
+
+                  <Input
+                    label="رقم الهاتف"
+                    type="tel"
+                    value={newUserForm.phone}
+                    onChange={(e) => setNewUserForm({...newUserForm, phone: e.target.value})}
+                    placeholder="مثال: 0591234567"
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">الدور *</label>
+                    <select
+                      value={newUserForm.roleId}
+                      onChange={(e) => setNewUserForm({...newUserForm, roleId: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">اختر الدور</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">نوع الارتباط</label>
+                    <select
+                      value={newUserForm.associatedType}
+                      onChange={(e) => setNewUserForm({...newUserForm, associatedType: e.target.value as any, associatedId: ''})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">غير مرتبط</option>
+                      <option value="organization">مؤسسة</option>
+                      <option value="family">عائلة</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">حالة المستخدم</label>
+                    <select
+                      value={newUserForm.status}
+                      onChange={(e) => setNewUserForm({...newUserForm, status: e.target.value as any})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="active">نشط</option>
+                      <option value="inactive">غير نشط</option>
+                    </select>
+                  </div>
+                </div>
+
+                {newUserForm.associatedType && (
+                  <Input
+                    label={`معرف ${newUserForm.associatedType === 'organization' ? 'المؤسسة' : 'العائلة'}`}
+                    type="text"
+                    value={newUserForm.associatedId}
+                    onChange={(e) => setNewUserForm({...newUserForm, associatedId: e.target.value})}
+                    placeholder={`معرف ${newUserForm.associatedType === 'organization' ? 'المؤسسة' : 'العائلة'} المرتبطة`}
+                  />
+                )}
+
+                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                  <div className="flex items-center space-x-2 space-x-reverse mb-2">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    <span className="font-medium text-yellow-800">ملاحظة مهمة</span>
+                  </div>
+                  <p className="text-yellow-700 text-sm">
+                    سيتم إنشاء حساب جديد بكلمة مرور افتراضية. يُنصح بتغيير كلمة المرور عند أول تسجيل دخول.
+                  </p>
+                </div>
+
+                <div className="flex space-x-3 space-x-reverse justify-end pt-4">
+                  <Button variant="secondary" onClick={() => setShowModal(false)}>
+                    إلغاء
+                  </Button>
+                  <Button variant="primary" onClick={handleCreateUser}>
+                    إضافة المستخدم
+                  </Button>
+                </div>
+              </div>
+            )}
             {/* Assign Role Form */}
             {modalType === 'assign-role' && (
               <div className="space-y-4">
@@ -850,48 +1192,34 @@ export default function PermissionsManagement({}: PermissionsManagementProps) {
                   </select>
                 </div>
                 
-                <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
+                <div className="flex space-x-3 space-x-reverse justify-end pt-4">
+                  <Button variant="secondary" onClick={() => setShowModal(false)}>
                     إلغاء
-                  </button>
-                  <button 
-                    onClick={handleUpdateUserRole}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                  >
+                  </Button>
+                  <Button variant="primary" onClick={handleUpdateUserRole}>
                     تعيين الدور
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
 
-            {/* Add User Form */}
-            {modalType === 'add-user' && (
-              <div className="text-center py-12">
-                <div className="bg-gray-100 rounded-xl p-8 mb-4">
-                  <UserPlus className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">نموذج إضافة مستخدم جديد</p>
-                  <p className="text-sm text-gray-500 mt-2">سيتم تطوير النموذج التفاعلي هنا</p>
-                </div>
-                
-                <div className="flex space-x-3 space-x-reverse justify-center">
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    إلغاء
-                  </button>
-                  <button className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
-                    إضافة المستخدم
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
-      )}
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setConfirmAction(null);
+        }}
+        onConfirm={executeConfirmedAction}
+        title={confirmationData.title}
+        message={confirmationData.message}
+        confirmButtonText={confirmationData.confirmText}
+        confirmButtonVariant={confirmationData.variant}
+        type={confirmationData.variant === 'danger' ? 'danger' : 'warning'}
+      />
     </div>
   );
 }
