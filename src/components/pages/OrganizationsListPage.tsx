@@ -463,7 +463,6 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
         </Modal>
       )}
     </div>
-    </div>
       {/* Confirmation Modal for Unsaved Changes */}
       <ConfirmationModal
         isOpen={showConfirmModal}
