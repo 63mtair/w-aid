@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Search, Filter, Plus, Eye, Trash2, CheckCircle, AlertTriangle, Clock, Users, Package, Download, RefreshCw, X, Star, TrendingUp, Activity, Shield, MessageSquare } from 'lucide-react';
+import { Bell, Search, Filter, Plus, Eye, Trash2, CheckCircle, AlertTriangle, Clock, Users, Package, Download, RefreshCw, X, Star, TrendingUp, Activity, Shield, MessageSquare, FileText, Calendar, Truck } from 'lucide-react';
 import { useAlerts } from '../../context/AlertsContext';
 import { mockBeneficiaries, mockPackages, mockTasks, type Alert } from '../../data/mockData';
 import { useErrorLogger } from '../../utils/errorLogger';
@@ -18,6 +18,8 @@ export default function AlertsManagementPage() {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const [exportFormat, setExportFormat] = useState<'json' | 'excel'>('json');
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Form state for adding new alerts
   const [newAlertForm, setNewAlertForm] = useState({
