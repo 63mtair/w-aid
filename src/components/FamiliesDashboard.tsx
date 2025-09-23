@@ -816,7 +816,6 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
         </Modal>
       )}
     </div>
-    </div>
       {/* Confirmation Modal for Unsaved Changes */}
       <ConfirmationModal
         isOpen={showConfirmModal}
