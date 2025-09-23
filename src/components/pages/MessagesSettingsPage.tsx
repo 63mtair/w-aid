@@ -873,9 +873,6 @@ export default function MessagesSettingsPage() {
                       تاريخ الإرسال
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      التكلفة
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       الإجراءات
                     </th>
                   </tr>
@@ -918,10 +915,7 @@ export default function MessagesSettingsPage() {
                             </Badge>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {new Date(log.sentAt).toLocaleString('ar-SA')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {log.cost ? `${log.cost.toFixed(2)} ₪` : '-'}
+                            {new Date(log.sentAt).toLocaleDateString('en-CA')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <Button 
@@ -941,7 +935,7 @@ export default function MessagesSettingsPage() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
+                      <td colSpan={6} className="px-6 py-12 text-center">
                         <div className="text-gray-500">
                           <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                           <p className="text-lg font-medium">لا توجد رسائل في السجل</p>
@@ -1357,18 +1351,12 @@ export default function MessagesSettingsPage() {
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">تاريخ الإرسال:</span>
-                      <p className="text-gray-900 mt-1">{new Date(selectedItem.sentAt).toLocaleString('ar-SA')}</p>
+                      <p className="text-gray-900 mt-1">{new Date(selectedItem.sentAt).toLocaleString('en-US')}</p>
                     </div>
                     {selectedItem.deliveredAt && (
                       <div>
                         <span className="font-medium text-gray-700">تاريخ التسليم:</span>
-                        <p className="text-gray-900 mt-1">{new Date(selectedItem.deliveredAt).toLocaleString('ar-SA')}</p>
-                      </div>
-                    )}
-                    {selectedItem.cost && (
-                      <div>
-                        <span className="font-medium text-gray-700">التكلفة:</span>
-                        <p className="text-gray-900 mt-1">{selectedItem.cost.toFixed(2)} ₪</p>
+                        <p className="text-gray-900 mt-1">{new Date(selectedItem.deliveredAt).toLocaleString('en-US')}</p>
                       </div>
                     )}
                     {selectedItem.failureReason && (
