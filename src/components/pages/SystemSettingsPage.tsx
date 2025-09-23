@@ -75,8 +75,10 @@ export default function SystemSettingsPage() {
       lastModified: '2024-12-21',
       modifiedBy: 'أحمد الإدمن'
     },
+
+    // Performance Settings
     {
-      id: '18',
+      id: '5',
       category: 'general',
       key: 'sms_provider',
       name: 'مزود خدمة الرسائل النصية',
@@ -84,96 +86,12 @@ export default function SystemSettingsPage() {
       value: 'twilio',
       type: 'select',
       options: ['twilio', 'nexmo', 'local'],
-      lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '19',
-      category: 'general',
-      key: 'email_notifications',
-      name: 'تفعيل الإشعارات بالبريد الإلكتروني',
-      description: 'إرسال إشعارات للمستخدمين عبر البريد الإلكتروني',
-      value: 'true',
-      type: 'boolean',
-      lastModified: '2024-12-21',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '20',
-      category: 'general',
-      key: 'sms_api_key',
-      name: 'مفتاح API للرسائل النصية',
-      description: 'مفتاح API الخاص بمزود خدمة الرسائل النصية',
-      value: 'sk_sms_1234567890',
-      type: 'password',
-      isSecret: true,
-      lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
-    },
-
-    // Security Settings
-    {
-      id: '5',
-      category: 'security',
-      key: 'session_timeout',
-      name: 'مهلة انتهاء الجلسة (دقيقة)',
-      description: 'المدة بالدقائق قبل انتهاء جلسة المستخدم تلقائياً',
-      value: '60',
-      type: 'number',
       lastModified: '2024-12-20',
       modifiedBy: 'أحمد الإدمن'
     },
     {
       id: '6',
-      category: 'security',
-      key: 'max_login_attempts',
-      name: 'الحد الأقصى لمحاولات تسجيل الدخول',
-      description: 'عدد المحاولات المسموحة قبل قفل الحساب',
-      value: '5',
-      type: 'number',
-      lastModified: '2024-12-19',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '7',
-      category: 'security',
-      key: 'require_2fa',
-      name: 'إجبار التحقق بخطوتين',
-      description: 'إجبار جميع المستخدمين على استخدام التحقق بخطوتين',
-      value: 'false',
-      type: 'boolean',
-      lastModified: '2024-12-18',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '8',
-      category: 'security',
-      key: 'encryption_key',
-      name: 'مفتاح التشفير',
-      description: 'مفتاح تشفير البيانات الحساسة',
-      value: 'sk_live_51234567890abcdef',
-      type: 'password',
-      isSecret: true,
-      lastModified: '2024-12-15',
-      modifiedBy: 'أحمد الإدمن'
-    },
-
-    // Notifications Settings
-    {
-      id: '9',
-      category: 'notifications',
-      key: 'sms_provider',
-      name: 'مزود خدمة الرسائل النصية',
-      description: 'مزود الخدمة المستخدم لإرسال الرسائل النصية',
-      value: 'twilio',
-      type: 'select',
-      options: ['twilio', 'nexmo', 'local'],
-      lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '10',
-      category: 'notifications',
+      category: 'general',
       key: 'email_notifications',
       name: 'تفعيل الإشعارات بالبريد الإلكتروني',
       description: 'إرسال إشعارات للمستخدمين عبر البريد الإلكتروني',
@@ -183,8 +101,8 @@ export default function SystemSettingsPage() {
       modifiedBy: 'أحمد الإدمن'
     },
     {
-      id: '11',
-      category: 'notifications',
+      id: '7',
+      category: 'general',
       key: 'sms_api_key',
       name: 'مفتاح API للرسائل النصية',
       description: 'مفتاح API الخاص بمزود خدمة الرسائل النصية',
@@ -197,18 +115,7 @@ export default function SystemSettingsPage() {
 
     // Performance Settings
     {
-      id: '12',
-      category: 'performance',
-      key: 'cache_duration',
-      name: 'مدة التخزين المؤقت (ثانية)',
-      description: 'مدة الاحتفاظ بالبيانات في التخزين المؤقت',
-      value: '3600',
-      type: 'number',
-      lastModified: '2024-12-19',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '13',
+      id: '8',
       category: 'performance',
       key: 'max_concurrent_tasks',
       name: 'الحد الأقصى للمهام المتزامنة',
@@ -219,7 +126,7 @@ export default function SystemSettingsPage() {
       modifiedBy: 'أحمد الإدمن'
     },
     {
-      id: '14',
+      id: '9',
       category: 'performance',
       key: 'enable_compression',
       name: 'تفعيل ضغط البيانات',
@@ -228,42 +135,6 @@ export default function SystemSettingsPage() {
       type: 'boolean',
       lastModified: '2024-12-17',
       modifiedBy: 'أحمد الإدمن'
-    },
-
-    // Backup Settings
-    {
-      id: '15',
-      category: 'backup',
-      key: 'auto_backup_enabled',
-      name: 'تفعيل النسخ الاحتياطي التلقائي',
-      description: 'إنشاء نسخ احتياطية تلقائية للبيانات',
-      value: 'true',
-      type: 'boolean',
-      lastModified: '2024-12-21',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '16',
-      category: 'backup',
-      key: 'backup_frequency',
-      name: 'تكرار النسخ الاحتياطي',
-      description: 'كم مرة يتم إنشاء نسخة احتياطية',
-      value: 'daily',
-      type: 'select',
-      options: ['hourly', 'daily', 'weekly', 'monthly'],
-      lastModified: '2024-12-20',
-      modifiedBy: 'أحمد الإدمن'
-    },
-    {
-      id: '17',
-      category: 'backup',
-      key: 'backup_retention_days',
-      name: 'مدة الاحتفاظ بالنسخ الاحتياطية (يوم)',
-      description: 'عدد الأيام للاحتفاظ بالنسخ الاحتياطية',
-      value: '30',
-      type: 'number',
-      lastModified: '2024-12-19',
-      modifiedBy: 'أحمد الإدمن'
     }
   ]);
 
@@ -271,10 +142,7 @@ export default function SystemSettingsPage() {
 
   const categories = [
     { id: 'general', name: 'الإعدادات العامة', icon: Settings, color: 'blue' },
-    { id: 'security', name: 'الأمان والخصوصية', icon: Shield, color: 'red' },
-    { id: 'notifications', name: 'الإشعارات', icon: Bell, color: 'green' },
-    { id: 'performance', name: 'الأداء', icon: Activity, color: 'purple' },
-    { id: 'backup', name: 'النسخ الاحتياطي', icon: Database, color: 'orange' }
+    { id: 'performance', name: 'الأداء', icon: Activity, color: 'purple' }
   ];
 
   const filteredSettings = systemSettings.filter(setting => {
@@ -680,47 +548,6 @@ export default function SystemSettingsPage() {
         )}
       </div>
 
-      {/* System Information */}
-      <Card>
-        <h3 className="text-lg font-bold text-gray-900 mb-6">معلومات النظام</h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-            <div className="flex items-center space-x-2 space-x-reverse mb-2">
-              <Server className="w-5 h-5 text-blue-600" />
-              <span className="font-medium text-blue-800">الخادم</span>
-            </div>
-            <p className="text-sm text-blue-700">Node.js v18.17.0</p>
-            <p className="text-xs text-blue-600">WebContainer</p>
-          </div>
-
-          <div className="bg-green-50 p-4 rounded-xl border border-green-200">
-            <div className="flex items-center space-x-2 space-x-reverse mb-2">
-              <Database className="w-5 h-5 text-green-600" />
-              <span className="font-medium text-green-800">قاعدة البيانات</span>
-            </div>
-            <p className="text-sm text-green-700">البيانات الوهمية</p>
-            <p className="text-xs text-green-600">للتطوير</p>
-          </div>
-
-          <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-            <div className="flex items-center space-x-2 space-x-reverse mb-2">
-              <Monitor className="w-5 h-5 text-purple-600" />
-              <span className="font-medium text-purple-800">الواجهة</span>
-            </div>
-            <p className="text-sm text-purple-700">React 18.3.1</p>
-            <p className="text-xs text-purple-600">Vite + TypeScript</p>
-          </div>
-
-          <div className="bg-orange-50 p-4 rounded-xl border border-orange-200">
-            <div className="flex items-center space-x-2 space-x-reverse mb-2">
-              <Activity className="w-5 h-5 text-orange-600" />
-              <span className="font-medium text-orange-800">الحالة</span>
-            </div>
-            <p className="text-sm text-orange-700">يعمل بشكل طبيعي</p>
-            <p className="text-xs text-orange-600">آخر تحديث: الآن</p>
-          </div>
-        </div>
-      </Card>
 
       {/* Modal for Backup/Restore */}
       {showModal && (
