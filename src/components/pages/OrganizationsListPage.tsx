@@ -162,6 +162,7 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
     handleCloseModal();
   };
   return (
+    <>
     <div className="space-y-6">
       {/* Data Source Indicator */}
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
@@ -462,6 +463,7 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
         </Modal>
       )}
     </div>
+    </div>
       {/* Confirmation Modal for Unsaved Changes */}
       <ConfirmationModal
         isOpen={showConfirmModal}
@@ -474,5 +476,18 @@ export default function OrganizationsListPage({ loggedInUser, highlightOrganizat
         type="warning"
         confirmButtonVariant="warning"
       />
+    {/* Confirmation Modal for Unsaved Changes */}
+    <ConfirmationModal
+      isOpen={showConfirmModal}
+      onClose={() => setShowConfirmModal(false)}
+      onConfirm={handleConfirmCloseModal}
+      title="تجاهل التغييرات؟"
+      message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
+      confirmButtonText="تجاهل التغييرات"
+      cancelButtonText="البقاء في النموذج"
+      type="warning"
+      confirmButtonVariant="warning"
+    />
+    </>
   );
 }

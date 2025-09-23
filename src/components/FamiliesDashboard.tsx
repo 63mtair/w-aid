@@ -186,6 +186,7 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
   );
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50/30 flex" dir="rtl">
       {/* Sidebar */}
       <div className="w-64 bg-white border-l border-gray-200 flex flex-col">
@@ -815,6 +816,7 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
         </Modal>
       )}
     </div>
+    </div>
       {/* Confirmation Modal for Unsaved Changes */}
       <ConfirmationModal
         isOpen={showConfirmModal}
@@ -827,5 +829,18 @@ export default function FamiliesDashboard({ onNavigateBack }: FamiliesDashboardP
         type="warning"
         confirmButtonVariant="warning"
       />
+    {/* Confirmation Modal for Unsaved Changes */}
+    <ConfirmationModal
+      isOpen={showConfirmModal}
+      onClose={() => setShowConfirmModal(false)}
+      onConfirm={handleConfirmClose}
+      title="تجاهل التغييرات؟"
+      message="لديك تغييرات غير محفوظة في النموذج. هل تريد تجاهل هذه التغييرات والإغلاق؟"
+      confirmButtonText="تجاهل التغييرات"
+      cancelButtonText="البقاء في النموذج"
+      type="warning"
+      confirmButtonVariant="warning"
+    />
+    </>
   );
 }

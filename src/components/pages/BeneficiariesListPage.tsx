@@ -379,24 +379,6 @@ export default function BeneficiariesListPage({ onNavigateToIndividualSend, onNa
     }
   };
 
-  const handleAttemptCloseModal = () => {
-    if (hasUnsavedChanges && (modalType === 'add' || modalType === 'edit')) {
-      setShowConfirmModal(true);
-    } else {
-      handleCloseModal();
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedBeneficiary(null);
-    setHasUnsavedChanges(false);
-  };
-
-  const handleConfirmCloseModal = () => {
-    setShowConfirmModal(false);
-    handleCloseModal();
-  };
   return (
     <div className="space-y-6">
       {/* Data Source Indicator */}
