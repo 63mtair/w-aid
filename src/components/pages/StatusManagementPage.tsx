@@ -18,6 +18,7 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
   const { loggedInUser } = useAuth();
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -266,6 +267,11 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 );
               }
             }
+            setNotification({ 
+              message: `تم توثيق هوية المستفيد: ${confirmAction.beneficiaryName} بنجاح`, 
+              type: 'success' 
+            });
+            setTimeout(() => setNotification(null), 3000);
             logInfo(`تم توثيق هوية المستفيد: ${confirmAction.beneficiaryName}`, 'StatusManagementPage');
           }
           break;
@@ -301,7 +307,12 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 );
               }
             }
-            logInfo(`تم طلب إعادة رفع الوثائق من المستفيد: ${confirmAction.beneficiaryName}. سيتم إرسال إشعار له لرفع وثائق جديدة.`, 'StatusManagementPage');
+            setNotification({ 
+              message: `تم طلب إعادة رفع الوثائق من المستفيد: ${confirmAction.beneficiaryName}. سيتم إرسال إشعار له لرفع وثائق جديدة.`, 
+              type: 'warning' 
+            });
+            setTimeout(() => setNotification(null), 5000);
+            logInfo(`تم طلب إعادة رفع الوثائق من المستفيد: ${confirmAction.beneficiaryName}`, 'StatusManagementPage');
           }
           break;
           
@@ -337,6 +348,11 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 }
               );
             }
+            setNotification({ 
+              message: `تم توثيق ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي بنجاح`, 
+              type: 'success' 
+            });
+            setTimeout(() => setNotification(null), 3000);
             logInfo(`تم توثيق ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي`, 'StatusManagementPage');
             setSelectedBeneficiaries([]);
           }
@@ -374,7 +390,12 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 }
               );
             }
-            logInfo(`تم طلب إعادة رفع الوثائق من ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي. سيتم إرسال إشعارات لهم لرفع وثائق جديدة.`, 'StatusManagementPage');
+            setNotification({ 
+              message: `تم طلب إعادة رفع الوثائق من ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي. سيتم إرسال إشعارات لهم لرفع وثائق جديدة.`, 
+              type: 'warning' 
+            });
+            setTimeout(() => setNotification(null), 5000);
+            logInfo(`تم طلب إعادة رفع الوثائق من ${confirmAction.beneficiaryIds.length} مستفيد بشكل جماعي`, 'StatusManagementPage');
             setSelectedBeneficiaries([]);
           }
           break;
@@ -410,7 +431,12 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
                 );
               }
             }
-            logInfo(`تم تعليق حساب المستفيد: ${confirmAction.beneficiaryName}. تم إيقاف جميع الخدمات وسيتم إشعار المستفيد.`, 'StatusManagementPage');
+            setNotification({ 
+              message: `تم تعليق حساب المستفيد: ${confirmAction.beneficiaryName}. تم إيقاف جميع الخدمات وسيتم إشعار المستفيد.`, 
+              type: 'warning' 
+            });
+            setTimeout(() => setNotification(null), 5000);
+            logInfo(`تم تعليق حساب المستفيد: ${confirmAction.beneficiaryName}`, 'StatusManagementPage');
           }
           break;
       }
@@ -419,6 +445,11 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
       setCurrentPage(currentPage);
     } catch (error) {
       logError(error as Error, 'StatusManagementPage');
+      setNotification({ 
+        message: 'حدث خطأ في تنفيذ العملية', 
+        type: 'error' 
+      });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
   
@@ -470,6 +501,23 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
 
   return (
     <div className="space-y-6">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-3 space-x-reverse ${
+          notification.type === 'success' ? 'bg-green-100 border-green-200 text-green-800' :
+          notification.type === 'error' ? 'bg-red-100 border-red-200 text-red-800' :
+          'bg-orange-100 border-orange-200 text-orange-800'
+        }`}>
+          {notification.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-600" /> :
+           notification.type === 'error' ? <AlertTriangle className="w-5 h-5 text-red-600" /> :
+           <Clock className="w-5 h-5 text-orange-600" />}
+          <span className="font-medium">{notification.message}</span>
+          <button onClick={() => setNotification(null)} className="text-gray-500 hover:text-gray-700">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Actions Bar */}
       <div className="flex items-center justify-between">
         <div className="flex space-x-3 space-x-reverse">
@@ -481,6 +529,8 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
               // محاكاة تحديث البيانات
               setCurrentPage(1);
               setSelectedBeneficiaries([]);
+              setNotification({ message: 'تم تحديث حالات التوثيق بنجاح', type: 'success' });
+              setTimeout(() => setNotification(null), 3000);
               logInfo('تم تحديث حالات التوثيق', 'StatusManagementPage');
             }}
           >
@@ -516,6 +566,8 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
               link.click();
               URL.revokeObjectURL(url);
               
+              setNotification({ message: 'تم تصدير تقرير التوثيق بنجاح', type: 'success' });
+              setTimeout(() => setNotification(null), 3000);
               logInfo('تم تصدير تقرير التوثيق', 'StatusManagementPage');
             }}
           >
@@ -1074,10 +1126,6 @@ export default function StatusManagementPage({ onNavigateToIndividualSend }: Sta
           onApproveIdentity={(beneficiaryId, beneficiaryName) => {
             setShowDetailsModal(false);
             handleApproveIdentity(beneficiaryId, beneficiaryName);
-          }}
-          onRejectIdentity={(beneficiaryId, beneficiaryName) => {
-            setShowDetailsModal(false);
-            handleRejectIdentity(beneficiaryId, beneficiaryName);
           }}
           onRequestReupload={(beneficiaryId, beneficiaryName) => {
             setShowDetailsModal(false);
