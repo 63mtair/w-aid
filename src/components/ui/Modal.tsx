@@ -35,18 +35,18 @@ export default function Modal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn" 
       dir="rtl"
       onClick={handleBackdropClick}
     >
-      <div className={`bg-white rounded-2xl w-full ${sizeClasses[size]} max-h-[95vh] flex flex-col ${className}`}>
+      <div className={`bg-white rounded-2xl w-full ${sizeClasses[size]} max-h-[95vh] flex flex-col ${className} animate-slideUp shadow-2xl`}>
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
             <button 
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-110"
             >
               <X className="w-5 h-5" />
             </button>
@@ -54,7 +54,7 @@ export default function Modal({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto animate-fadeIn">
           {children}
         </div>
       </div>

@@ -29,12 +29,12 @@ export default function Button({
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    warning: 'bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500'
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 hover:shadow-lg hover:scale-105 active:scale-95',
+    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 hover:shadow-md hover:scale-105 active:scale-95',
+    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 hover:shadow-lg hover:scale-105 active:scale-95',
+    warning: 'bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500 hover:shadow-lg hover:scale-105 active:scale-95',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 hover:shadow-lg hover:scale-105 active:scale-95',
+    ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500 hover:shadow-sm hover:scale-105 active:scale-95'
   };
 
   const sizeClasses = {
@@ -43,7 +43,7 @@ export default function Button({
     lg: 'px-6 py-4 text-base'
   };
 
-  const disabledClasses = disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:transform hover:scale-105';
+  const disabledClasses = disabled || loading ? 'opacity-50 cursor-not-allowed' : '';
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses} ${className}`;
 
@@ -55,17 +55,17 @@ export default function Button({
       className={classes}
     >
       {loading && (
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current ml-2"></div>
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current ml-2 animate-pulse"></div>
       )}
       
       {Icon && iconPosition === 'right' && !loading && (
-        <Icon className="w-4 h-4 ml-2" />
+        <Icon className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:scale-110" />
       )}
       
       {children}
       
       {Icon && iconPosition === 'left' && !loading && (
-        <Icon className="w-4 h-4 mr-2" />
+        <Icon className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
       )}
     </button>
   );

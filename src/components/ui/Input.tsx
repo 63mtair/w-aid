@@ -30,13 +30,13 @@ export default function Input({
   rows = 3,
   label
 }: InputProps) {
-  const baseClasses = 'w-full border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+  const baseClasses = 'w-full border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:shadow-lg';
   
   const sizeClasses = type === 'textarea' ? 'px-4 py-3' : 'px-4 py-3';
   
   const stateClasses = error 
-    ? 'border-red-300 bg-red-50 focus:ring-red-500' 
-    : 'border-gray-300 focus:ring-blue-500';
+    ? 'border-red-300 bg-red-50 focus:ring-red-500 animate-shake' 
+    : 'border-gray-300 focus:ring-blue-500 hover:border-gray-400';
     
   const disabledClasses = disabled ? 'bg-gray-50 cursor-not-allowed opacity-60' : '';
   
@@ -53,7 +53,7 @@ export default function Input({
         </label>
       )}
       
-      <div className="relative">
+      <div className="relative group">
         {type === 'textarea' ? (
           <textarea
             value={value}
@@ -79,14 +79,14 @@ export default function Input({
         {Icon && (
           <div className={`absolute top-1/2 transform -translate-y-1/2 ${
             iconPosition === 'right' ? 'right-4' : 'left-4'
-          }`}>
-            <Icon className="w-4 h-4 text-gray-400" />
+          } group-focus-within:text-blue-500`}>
+            <Icon className="w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
           </div>
         )}
       </div>
       
       {error && (
-        <p className="text-red-600 text-sm mt-1 flex items-center">
+        <p className="text-red-600 text-sm mt-1 flex items-center animate-slideDown">
           <span className="w-4 h-4 mr-1">⚠️</span>
           {error}
         </p>

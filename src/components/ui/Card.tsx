@@ -15,7 +15,7 @@ export default function Card({
   hover = false,
   onClick
 }: CardProps) {
-  const baseClasses = 'bg-white border border-gray-200 rounded-xl transition-colors';
+  const baseClasses = 'bg-white border border-gray-200 rounded-xl transition-all duration-200';
   
   const paddingClasses = {
     none: '',
@@ -24,7 +24,7 @@ export default function Card({
     lg: 'p-8'
   };
 
-  const hoverClasses = hover ? 'hover:border-gray-300 cursor-pointer' : '';
+  const hoverClasses = hover ? 'hover:border-gray-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer' : '';
   const clickableClasses = onClick ? 'cursor-pointer' : '';
 
   const classes = `${baseClasses} ${paddingClasses[padding]} ${hoverClasses} ${clickableClasses} ${className}`;

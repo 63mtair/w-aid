@@ -83,7 +83,7 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
 
           <div className="grid md:grid-cols-3 gap-6">
             {/* Admin Dashboard */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-colors">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-300 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] card-hover">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
                 <Shield className="w-6 h-6 text-blue-600" />
               </div>
@@ -108,7 +108,7 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
               </ul>
               <button 
                 onClick={() => onNavigateTo('admin')}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95"
               >
                 <span>دخول لوحة الإدمن</span>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -116,7 +116,7 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
             </div>
 
             {/* Organizations Dashboard */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-green-300 transition-colors">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-green-300 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] card-hover">
               <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-4">
                 <Building2 className="w-6 h-6 text-green-600" />
               </div>
@@ -141,7 +141,7 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
               </ul>
               <button 
                 onClick={() => onNavigateTo('organizations')}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-all duration-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95"
               >
                 <span>دخول لوحة المؤسسات</span>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -149,7 +149,7 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
             </div>
 
             {/* Families Dashboard */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-purple-300 transition-colors">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-purple-300 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] card-hover">
               <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
@@ -174,7 +174,7 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
               </ul>
               <button 
                 onClick={() => onNavigateTo('families')}
-                className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
+                className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95"
               >
                 <span>دخول لوحة العائلات</span>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -197,28 +197,28 @@ export default function LandingPage({ onNavigateTo }: LandingPageProps) {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] card-hover">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-4">
                 <MapPin className="w-5 h-5 text-blue-600" />
               </div>
               <h4 className="font-medium text-gray-900 mb-2">التتبع المباشر</h4>
               <p className="text-sm text-gray-600">خريطة تفاعلية لتتبع المستفيدين والمندوبين</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] card-hover">
               <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mb-4">
                 <Package className="w-5 h-5 text-green-600" />
               </div>
               <h4 className="font-medium text-gray-900 mb-2">إدارة الطرود</h4>
               <p className="text-sm text-gray-600">نظام شامل لإدارة وتتبع جميع الطرود</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] card-hover">
               <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center mb-4">
                 <Bell className="w-5 h-5 text-orange-600" />
               </div>
               <h4 className="font-medium text-gray-900 mb-2">التنبيهات الذكية</h4>
               <p className="text-sm text-gray-600">تنبيهات فورية للطلبات المتأخرة والمشاكل</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-gray-200">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] card-hover">
               <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
                 <BarChart3 className="w-5 h-5 text-purple-600" />
               </div>

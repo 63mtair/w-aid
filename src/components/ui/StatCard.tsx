@@ -36,25 +36,25 @@ export default function StatCard({
   };
 
   return (
-    <div className={`bg-white p-6 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors ${className}`}>
+    <div className={`bg-white p-6 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] ${className}`}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-2xl font-semibold text-gray-900">{value}</p>
+          <p className="text-2xl font-semibold text-gray-900 animate-countUp">{value}</p>
           
           {trend && (
-            <p className={`text-sm mt-1 flex items-center ${trendColorClasses[trend.direction]}`}>
+            <p className={`text-sm mt-1 flex items-center ${trendColorClasses[trend.direction]} animate-slideUp`}>
               {trend.direction === 'up' ? (
-                <TrendingUp className="w-4 h-4 ml-1" />
+                <TrendingUp className="w-4 h-4 ml-1 animate-bounce" />
               ) : (
-                <TrendingDown className="w-4 h-4 ml-1" />
+                <TrendingDown className="w-4 h-4 ml-1 animate-bounce" />
               )}
               {trend.value} {trend.label}
             </p>
           )}
         </div>
         
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClasses[color]}`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClasses[color]} transition-transform duration-200 hover:scale-110 hover:rotate-3`}>
           <Icon className="w-6 h-6" />
         </div>
       </div>

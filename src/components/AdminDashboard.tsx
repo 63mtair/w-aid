@@ -684,13 +684,13 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
           <div className="grid md:grid-cols-3 gap-4">
             <Card hover onClick={() => setActiveTab('beneficiaries-list')}>
               <div className="flex items-center space-x-3 space-x-reverse mb-4">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                   <UserPlus className="w-4 h-4 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">إدارة المستفيدين</h3>
               </div>
               <p className="text-gray-600 mb-4 text-sm">إضافة وإدارة المستفيدين الجدد</p>
-              <div className="flex items-center text-blue-600 text-sm font-medium">
+              <div className="flex items-center text-blue-600 text-sm font-medium transition-transform duration-200 group-hover:translate-x-1">
                 <span>إدارة المستفيدين</span>
                 <ChevronRight className="w-4 h-4 mr-1" />
               </div>
@@ -698,13 +698,13 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
 
             <Card hover onClick={() => setActiveTab('packages-list')}>
               <div className="flex items-center space-x-3 space-x-reverse mb-4">
-                <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                   <Package className="w-4 h-4 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">إدارة الطرود</h3>
               </div>
               <p className="text-gray-600 mb-4 text-sm">إنشاء وتوزيع الطرود</p>
-              <div className="flex items-center text-green-600 text-sm font-medium">
+              <div className="flex items-center text-green-600 text-sm font-medium transition-transform duration-200 group-hover:translate-x-1">
                 <span>إدارة الطرود</span>
                 <ChevronRight className="w-4 h-4 mr-1" />
               </div>
@@ -712,13 +712,13 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
 
             <Card hover onClick={() => setActiveTab('reports')}>
               <div className="flex items-center space-x-3 space-x-reverse mb-4">
-                <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                   <BarChart3 className="w-4 h-4 text-purple-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">التقارير والإحصائيات</h3>
               </div>
               <p className="text-gray-600 mb-4 text-sm">عرض التقارير المفصلة</p>
-              <div className="flex items-center text-purple-600 text-sm font-medium">
+              <div className="flex items-center text-purple-600 text-sm font-medium transition-transform duration-200 group-hover:translate-x-1">
                 <span>عرض التقارير</span>
                 <ChevronRight className="w-4 h-4 mr-1" />
               </div>
@@ -732,7 +732,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
               <h3 className="text-lg font-semibold text-gray-900 mb-4">آخر الأنشطة</h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3 space-x-reverse p-3 rounded-lg bg-green-50 border border-green-200">
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center animate-pulse">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <div className="flex-1">
@@ -742,7 +742,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
                 </div>
                 
                 <div className="flex items-start space-x-3 space-x-reverse p-3 rounded-lg bg-blue-50 border border-blue-200">
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
                     <UserPlus className="w-4 h-4 text-blue-600" />
                   </div>
                   <div className="flex-1">
@@ -752,7 +752,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
                 </div>
                 
                 <div className="flex items-start space-x-3 space-x-reverse p-3 rounded-lg bg-orange-50 border border-orange-200">
-                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center animate-pulse">
                     <AlertTriangle className="w-4 h-4 text-orange-600" />
                   </div>
                   <div className="flex-1">
@@ -762,7 +762,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
                 </div>
                 
                 <div className="flex items-start space-x-3 space-x-reverse p-3 rounded-lg bg-purple-50 border border-purple-200">
-                  <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
+                  <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center animate-pulse">
                     <Building2 className="w-4 h-4 text-purple-600" />
                   </div>
                   <div className="flex-1">
@@ -776,7 +776,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
                 variant="ghost"
                 size="sm"
                 onClick={() => setActiveTab('alerts')}
-                className="w-full mt-4"
+                className="w-full mt-4 hover:bg-blue-50"
               >
                 عرض جميع الأنشطة
               </Button>
